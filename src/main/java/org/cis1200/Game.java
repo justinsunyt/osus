@@ -14,7 +14,7 @@ public class Game {
      */
     public static void main(String[] args) {
         // Set the game you want to run here
-        Runnable game = new org.cis1200.mushroom.RunMushroomOfDoom();
+        Runnable game = new org.cis1200.osus.RunOsus();
         Employee e1 = new Employee(1001, "Derok", "Dranf");
 
         SwingUtilities.invokeLater(game);

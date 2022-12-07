@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="hw09" />
         <module name="hw09_local_temp" />
+        <module name="osus" />
       </profile>
     </annotationProcessing>
   </component>
