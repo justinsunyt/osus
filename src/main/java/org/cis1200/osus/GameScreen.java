@@ -26,6 +26,9 @@ public class GameScreen extends JPanel {
     private int frame = 0;
     private int beat = 0;
     private int bpm;
+    private int mouseX;
+    private int mouseY;
+    private boolean hittableNote = false;
 
     // Update interval for timer, in milliseconds
     public static final int INTERVAL = 1000 / 240;
@@ -52,13 +55,14 @@ public class GameScreen extends JPanel {
         // method below actually moves the square.)
         addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_Z) {
+                if (e.getKeyCode() == KeyEvent.VK_Z || e.getKeyCode() == KeyEvent.VK_X) {
                     for (Circle c : notes) {
                         if (c.getHittable()) {
-                            if (MouseInfo.getPointerInfo().getLocation().getX() > c.getPx() - c.getWidth() / 2 && MouseInfo.getPointerInfo().getLocation().getX() < c.getPx() + 50) {
-                                if (MouseInfo.getPointerInfo().getLocation().getY() > c.getPy() - 50 && MouseInfo.getPointerInfo().getLocation().getY() < c.getPy() + 50) {
-                                    c.setHittable(false);
+                            if (mouseX >= c.getPx() - c.getWidth() / 2 && mouseX <= c.getPx() + c.getWidth() / 2) {
+                                if (mouseY >= c.getPy() - c.getHeight() / 2 && mouseY <= c.getPy() + c.getHeight() / 2) {
                                     c.hit();
+                                    hittableNote = false;
+                                    System.out.println("hit");
                                 }
                             }
                         }
@@ -75,20 +79,19 @@ public class GameScreen extends JPanel {
             public void mouseMoved(MouseEvent e) {
                 cursor.setPx(e.getX() - cursor.getWidth() / 2);
                 cursor.setPy(e.getY() - cursor.getHeight() / 2);
+                mouseX = e.getX();
+                mouseY = e.getY();
             }
         });
     }
 
     public void loadBeatmap() {
-        final Circle test1 = new Circle(20, 10, 2, 5, 8, 1, new Color(255, 0, 0, 150));
-        final Circle test2 = new Circle(30, 20, 4, 5, 8, 2, new Color(0, 0, 255, 150));
-        final Circle test3 = new Circle(40, 30, 6, 5, 8, 3, new Color(255, 0, 0, 150));
-        final Circle test4 = new Circle(50, 40, 8, 5, 8, 4, new Color(0, 0, 255, 150));
-        this.notes.add(test1);
-        this.notes.add(test2);
-        this.notes.add(test3);
-        this.notes.add(test4);
-        this.bpm = 120;
+        // loop to create circles spaced 2 apart every 2nd quarternote
+        for (int i = 0; i < 10; i++) {
+            final Circle c = new Circle(i * 2, i * 2, i * 4, 5, 8, i, new Color(255, 0, 0, 150));
+            this.notes.add(c);
+        }
+        this.bpm = 60;
     }
 
 
@@ -113,22 +116,22 @@ public class GameScreen extends JPanel {
 
             // update the display
             if (notes != null) {
-                boolean hittable = false;
                 for (Circle note : notes) {
-                    if (frame >= (note.getBeat() * 14400 / bpm - note.getAnimateDuration())
-                            && frame <= (note.getBeat() * 14400 / bpm)) {
-                        note.animateIn();
-                        if (!hittable) {
+                    if (!note.getHit() && frame >= (note.getQuarterNote() * 14400 / (bpm * 4) - note.getAnimateDuration())
+                            && frame <= (note.getQuarterNote() * 14400 / (bpm * 4))) {
+                        if (!hittableNote) {
                             note.setHittable(true);
-                            hittable = true;
+                            hittableNote = true;
                         }
+                        note.animateIn();
                     }
-                    if (!note.getHit() && frame >= ((note.getBeat() + 1) * 14400 / bpm)
-                            && frame <= ((note.getBeat() + 1) * 14400 / bpm + note.getAnimateDuration())) {
+                    if (!note.getHit() && frame >= note.getQuarterNote() * 14400 / (bpm * 4) + note.getAnimateDuration()
+                            && frame <= note.getQuarterNote() * 14400 / (bpm * 4) + note.getAnimateDuration() * 2) {
                         note.miss();
+                        hittableNote = false;
                     }
-                    if (!note.getHit() && frame >= ((note.getBeat() + 2) * 14400 / bpm)
-                            && frame <= ((note.getBeat() + 2) * 14400 / bpm + note.getAnimateDuration())) {
+                    if (!note.getHit() && frame >= ((note.getQuarterNote() + 2) * 14400 / (bpm * 4))
+                            && frame <= ((note.getQuarterNote() + 2) * 14400 / (bpm * 4) + note.getAnimateDuration())) {
                         note.animateMissOut();
                     }
                 }

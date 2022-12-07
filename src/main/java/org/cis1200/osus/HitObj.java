@@ -26,7 +26,7 @@ public abstract class HitObj extends GameObj implements Comparable {
 
     public abstract int getAnimateDuration();
 
-    public abstract int getBeat();
+    public abstract int getQuarterNote();
 
     public abstract boolean getHit();
 
