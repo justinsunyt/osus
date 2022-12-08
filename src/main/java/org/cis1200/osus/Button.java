@@ -1,9 +1,12 @@
 package org.cis1200.osus;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 public class Button extends GameObj{
-    private String text;
+    private BufferedImage image;
     private boolean disabled = false;
 
     /**
@@ -14,9 +17,13 @@ public class Button extends GameObj{
      * @param width
      * @param height
      */
-    public Button(int px, int py, int width, int height, String text) {
+    public Button(int px, int py, int width, int height, String file) {
         super(px, py, width, height);
-        this.text = text;
+        try {
+            image = ImageIO.read(new File(file));
+        } catch (Exception e) {
+            System.out.println("Error loading image");
+        }
     }
 
     public void setDisabled() {
@@ -30,13 +37,7 @@ public class Button extends GameObj{
     @Override
     public void draw(Graphics g) {
         if (!disabled) {
-            g.setColor(Color.WHITE);
-            g.fillRect(this.getPx(), this.getPy(), this.getWidth(), this.getHeight());
-            g.setColor(Color.BLACK);
-            Font numberFont = new Font("Roboto", Font.BOLD, 24);
-            FontMetrics metrics = g.getFontMetrics(numberFont);
-            g.setFont(numberFont);
-            g.drawString(this.text, this.getPx() + this.getWidth() / 2 - metrics.stringWidth(this.text) / 2, this.getPy() + this.getHeight() / 2 + metrics.getHeight() / 2);
+            g.drawImage(image, this.getPx(), this.getPy(), this.getWidth(), this.getHeight(), null);
         }
     }
 }

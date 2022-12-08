@@ -3,9 +3,6 @@ package org.cis1200.osus;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.temporal.Temporal;
 import java.util.TreeSet;
 
 /**
@@ -21,7 +18,7 @@ public class GameScreen extends JPanel {
     private final TreeSet<Circle> notes = new TreeSet<Circle>();
     private Circle currentCircle;
     private final Cursor cursor = new Cursor(0, 0, 30, 30);
-    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH / 2 - 100, ScreenSize.SCREEN_HEIGHT / 2 - 50, 200, 100, "Start");
+    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH / 2 - 100, ScreenSize.SCREEN_HEIGHT / 2 - 100, 200, 200, "files/images/start.png");
 
     private boolean playing = false; // whether the game is running
     private int bpm;
@@ -81,7 +78,6 @@ public class GameScreen extends JPanel {
             }
 
             public void keyReleased(KeyEvent e) {
-
             }
         });
 
@@ -96,14 +92,26 @@ public class GameScreen extends JPanel {
     }
 
     public void loadBeatmap() {
+//        for (int i = 1; i < 20; i++) {
+//            final Circle c = new Circle(i * 2 + 10, i * 2 + 10, i * 2 + 16, 5, 8, i, new Color(255, 0, 0, 150));
+//            this.notes.add(c);
+//        }
+        // triplet circle
+        final Circle c1 = new Circle(40, 40, 12, 5, 7, 1, new Color(255, 0, 0, 150));
+        final Circle c2 = new Circle(41, 41, 13, 5, 7, 2, new Color(255, 0, 0, 150));
+        final Circle c3 = new Circle(42, 42, 14, 5, 7, 3, new Color(255, 0, 0, 150));
+
+        this.notes.add(c1);
+        this.notes.add(c2);
+        this.notes.add(c3);
         for (int i = 1; i < 20; i++) {
-            final Circle c = new Circle(i * 2 + 10, i * 2 + 10, i * 8 + 16, 5, 8, i, new Color(255, 0, 0, 150));
+            final Circle c = new Circle(i * 2 + 20, i * 2 + 20, i * 4 + 14, 5, 7, i, new Color(255, 0, 255, 150));
             this.notes.add(c);
         }
 
         this.bpm = 180;
         this.beatmap = "files/beatmaps/sunglow.wav";
-        this.offset = -140;
+        this.offset = -20;
     }
 
 
