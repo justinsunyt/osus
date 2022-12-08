@@ -2,10 +2,10 @@ package org.cis1200.osus;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
+import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.temporal.Temporal;
 import java.util.TreeSet;
 
 /**
@@ -20,18 +20,19 @@ public class GameScreen extends JPanel {
     // the state of the game logic
     private final TreeSet<Circle> notes = new TreeSet<Circle>();
     private final Cursor cursor = new Cursor(0, 0, 30, 30);
-
+    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH / 2 - 100, ScreenSize.SCREEN_HEIGHT / 2 - 50, 200, 100, "Start");
 
     private boolean playing = false; // whether the game is running
-    private int frame = 0;
-    private int beat = 0;
     private int bpm;
     private int mouseX;
     private int mouseY;
     private boolean hittableNote = false;
+    private String beatmap;
+    private long offset;
+    private long startTime;
 
     // Update interval for timer, in milliseconds
-    public static final int INTERVAL = 1000 / 240;
+    public static final int INTERVAL = 1000/240;
 
     public GameScreen() {
         // creates border around the court area, JComponent method
@@ -43,7 +44,7 @@ public class GameScreen extends JPanel {
         // actionPerformed() method is called each time the timer triggers. We
         // define a helper method called tick() that actually does everything
         // that should be done in a single time step.
-        Timer timer = new Timer(INTERVAL, e -> tick());
+        Timer timer = new Timer(INTERVAL, this::tick);
         timer.start(); // MAKE SURE TO START THE TIMER!
 
         // Enable keyboard focus on the court area. When this component has the
@@ -63,10 +64,22 @@ public class GameScreen extends JPanel {
                                     c.hit();
                                     hittableNote = false;
                                     System.out.println("hit");
+                                    Sound.playSound("files/sounds/hit.wav");
                                 }
                             }
                         }
                     }
+                    if (!startButton.getDisabled()) {
+                        if (mouseX >= startButton.getPx() && mouseX <= startButton.getPx() + startButton.getWidth()) {
+                            if (mouseY >= startButton.getPy() && mouseY <= startButton.getPy() + startButton.getHeight()) {
+                                playing = true;
+                                startTime = System.currentTimeMillis();
+                                Sound.playSound(beatmap);
+                                startButton.setDisabled();
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -86,12 +99,14 @@ public class GameScreen extends JPanel {
     }
 
     public void loadBeatmap() {
-        // loop to create circles spaced 2 apart every 2nd quarternote
-        for (int i = 0; i < 10; i++) {
-            final Circle c = new Circle(i * 2, i * 2, i * 4, 5, 8, i, new Color(255, 0, 0, 150));
+        for (int i = 1; i < 20; i++) {
+            final Circle c = new Circle(i * 2 + 10, i * 2 + 10, i * 4 + 16, 5, 8, i, new Color(255, 0, 0, 150));
             this.notes.add(c);
         }
-        this.bpm = 60;
+
+        this.bpm = 180;
+        this.beatmap = "files/beatmaps/sunglow.wav";
+        this.offset = -120;
     }
 
 
@@ -99,10 +114,6 @@ public class GameScreen extends JPanel {
      * (Re-)set the game to its initial state.
      */
     public void reset() {
-
-
-        playing = true;
-
         // Make sure that this component has the keyboard focus
         requestFocusInWindow();
     }
@@ -111,51 +122,43 @@ public class GameScreen extends JPanel {
      * This method is called every time the timer defined in the constructor
      * triggers.
      */
-    void tick() {
+    void tick(ActionEvent e) {
+        long timeDelta = e.getWhen() - startTime;
         if (playing) {
-
             // update the display
             if (notes != null) {
                 for (Circle note : notes) {
-                    if (!note.getHit() && frame >= (note.getQuarterNote() * 14400 / (bpm * 4) - note.getAnimateDuration())
-                            && frame <= (note.getQuarterNote() * 14400 / (bpm * 4))) {
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - note.getAnimateDuration() + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + offset)) {
                         if (!hittableNote) {
                             note.setHittable(true);
                             hittableNote = true;
                         }
                         note.animateIn();
                     }
-                    if (!note.getHit() && frame >= note.getQuarterNote() * 14400 / (bpm * 4) + note.getAnimateDuration()
-                            && frame <= note.getQuarterNote() * 14400 / (bpm * 4) + note.getAnimateDuration() * 2) {
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration() + offset)) {
                         note.miss();
                         hittableNote = false;
                     }
-                    if (!note.getHit() && frame >= ((note.getQuarterNote() + 2) * 14400 / (bpm * 4))
-                            && frame <= ((note.getQuarterNote() + 2) * 14400 / (bpm * 4) + note.getAnimateDuration())) {
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration() + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + 2L * note.getAnimateDuration() + offset)) {
                         note.animateMissOut();
                     }
                 }
             }
-
-
-
-            frame++;
-            if (frame % (14400 / bpm) == 0) {
-                beat++;
-                System.out.println("Beat: " + beat);
-            }
-//            System.out.println("Frame: " + frame);
-            repaint();
         }
+        repaint();
     }
 
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        for (Circle note : notes) {
+        for (Circle note : notes.descendingSet()) {
             note.draw(g);
         }
         cursor.draw(g);
+        startButton.draw(g);
     }
 
     @Override

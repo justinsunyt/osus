@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
  */
 public class RunOsus implements Runnable {
     public void run() {
+        System.setProperty("sun.java2d.opengl", "true");
         // NOTE : recall that the 'final' keyword notes immutability even for
         // local variables.
 

@@ -30,7 +30,7 @@ public class Circle extends HitObj {
 
     public void animateIn() {
         if (this.opacity < 255) {
-            this.opacity += Math.min(255 - this.opacity, this.ar / 2);
+            this.opacity += Math.min(255 - this.opacity, this.ar / 3);
         }
     }
 
@@ -41,9 +41,10 @@ public class Circle extends HitObj {
     }
 
     public void miss() {
+        this.hittable = false;
         this.opacity = 0;
         if (this.missOpacity < 255) {
-            this.missOpacity += Math.min(255 - this.missOpacity, this.ar / 2);
+            this.missOpacity += Math.min(255 - this.missOpacity, this.ar / 3);
         }
     }
 
@@ -53,12 +54,12 @@ public class Circle extends HitObj {
 
     public void animateMissOut() {
         if (this.missOpacity > 0) {
-            this.missOpacity -= Math.min(this.missOpacity, this.ar / 2);
+            this.missOpacity -= Math.min(this.missOpacity, this.ar / 3);
         }
     }
 
     public int getAnimateDuration() {
-        return 255 / this.ar * 2 + 1;
+        return 255 / this.ar * 21;
     }
 
     public int getQuarterNote() {
