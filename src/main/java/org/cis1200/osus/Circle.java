@@ -15,6 +15,7 @@ public class Circle extends HitObj {
     private int opacity = 0;
     private int missOpacity = 0;
     private boolean hit = false;
+    private boolean missed = false;
     private boolean hittable = false;
 
     public Circle(int posX, int posY, int quarterNote, int cs, int ar, int number, Color color) {
@@ -43,6 +44,7 @@ public class Circle extends HitObj {
     public void miss() {
         this.hittable = false;
         this.opacity = 0;
+        this.missed = true;
         if (this.missOpacity < 255) {
             this.missOpacity += Math.min(255 - this.missOpacity, this.ar / 3);
         }
@@ -68,6 +70,10 @@ public class Circle extends HitObj {
 
     public boolean getHit() {
         return this.hit;
+    }
+
+    public boolean getMissed() {
+        return this.missed;
     }
 
     public boolean getHittable() {

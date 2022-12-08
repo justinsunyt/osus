@@ -30,6 +30,8 @@ public abstract class HitObj extends GameObj implements Comparable {
 
     public abstract boolean getHit();
 
+    public abstract boolean getMissed();
+
     public abstract boolean getHittable();
 
     public abstract void setHittable(boolean hittable);
