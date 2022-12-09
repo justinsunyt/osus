@@ -12,19 +12,19 @@ public abstract class HitObj extends GameObj implements Comparable {
      * @param beat
      */
 
-    public abstract void animateIn();
+    public abstract void animateIn(long getTimeSinceLastTick);
 
     public abstract void hit();
 
-    public abstract void miss();
+    public abstract void miss(long getTimeSinceLastTick);
 
-    public abstract void animate100();
+    public abstract void animate100(long getTimeSinceLastTick);
 
-    public abstract void animate50();
+    public abstract void animate50(long getTimeSinceLastTick);
 
-    public abstract void animateMissOut();
+    public abstract void animateOut(long getTimeSinceLastTIck);
 
-    public abstract int getAnimateDuration();
+    public abstract long getAnimateDuration(long getTimeSinceLastTick);
 
     public abstract int getQuarterNote();
 
@@ -32,9 +32,13 @@ public abstract class HitObj extends GameObj implements Comparable {
 
     public abstract boolean getMissed();
 
-    public abstract boolean getHittable();
+    public abstract int getHitScore();
 
-    public abstract void setHittable(boolean hittable);
+    public abstract void setHitScore(int hitScore);
+
+    public abstract int getIfHitScore();
+
+    public abstract void setIfHitScore(int ifHitScore);
 
     public HitObj(int px, int py, int width, int height, int beat) {
         super(px, py, width, height);

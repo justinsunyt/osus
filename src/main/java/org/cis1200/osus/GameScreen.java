@@ -27,6 +27,7 @@ public class GameScreen extends JPanel {
     private String beatmap;
     private long offset;
     private long startTime;
+    private long lastTick;
     private boolean songStarted = false;
 
     // Update interval for timer, in milliseconds
@@ -55,9 +56,15 @@ public class GameScreen extends JPanel {
         addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_Z || e.getKeyCode() == KeyEvent.VK_X) {
-                    if (currentCircle != null && currentCircle.getHittable()) {
+                    if (currentCircle != null && currentCircle.getIfHitScore() > 0) {
                         if (mouseX >= currentCircle.getPx() - currentCircle.getWidth() / 2 && mouseX <= currentCircle.getPx() + currentCircle.getWidth() / 2) {
                             if (mouseY >= currentCircle.getPy() - currentCircle.getHeight() / 2 && mouseY <= currentCircle.getPy() + currentCircle.getHeight() / 2) {
+                                if (currentCircle.getIfHitScore() == 50) {
+                                    currentCircle.setHitScore(50);
+                                }
+                                if (currentCircle.getIfHitScore() == 100) {
+                                    currentCircle.setHitScore(100);
+                                }
                                 currentCircle.hit();
                                 Sound.playSound("files/sounds/hit.wav");
                             }
@@ -97,21 +104,21 @@ public class GameScreen extends JPanel {
 //            this.notes.add(c);
 //        }
         // triplet circle
-        final Circle c1 = new Circle(40, 40, 12, 5, 7, 1, new Color(255, 0, 0, 150));
-        final Circle c2 = new Circle(41, 41, 13, 5, 7, 2, new Color(255, 0, 0, 150));
-        final Circle c3 = new Circle(42, 42, 14, 5, 7, 3, new Color(255, 0, 0, 150));
+        final Circle c1 = new Circle(40, 40, 12, 5, 8, 1, new Color(255, 0, 0, 150));
+        final Circle c2 = new Circle(41, 41, 13, 5, 8, 2, new Color(255, 0, 0, 150));
+        final Circle c3 = new Circle(42, 42, 14, 5, 8, 3, new Color(255, 0, 0, 150));
 
         this.notes.add(c1);
         this.notes.add(c2);
         this.notes.add(c3);
         for (int i = 1; i < 20; i++) {
-            final Circle c = new Circle(i * 2 + 20, i * 2 + 20, i * 4 + 14, 5, 7, i, new Color(255, 0, 255, 150));
+            final Circle c = new Circle(i * 2 + 20, i * 2 + 20, i * 4 + 14, 5, 8, i, new Color(255, 0, 255, 150));
             this.notes.add(c);
         }
 
         this.bpm = 180;
         this.beatmap = "files/beatmaps/sunglow.wav";
-        this.offset = -20;
+        this.offset = -40;
     }
 
 
@@ -129,6 +136,8 @@ public class GameScreen extends JPanel {
      */
     void tick(ActionEvent e) {
         long timeDelta = e.getWhen() - startTime;
+        long timeSinceLastTick = e.getWhen() - lastTick;
+        lastTick = e.getWhen();
         if (playing) {
             if (timeDelta >= 1000 && !songStarted) {
                 Sound.playSound(beatmap);
@@ -146,21 +155,46 @@ public class GameScreen extends JPanel {
             // update the display
             if (notes != null) {
                 for (Circle note : notes) {
-                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - note.getAnimateDuration() + offset)
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - note.getAnimateDuration(timeSinceLastTick) + offset)
                             && timeDelta <= (note.getQuarterNote() * 15000L / bpm + offset)) {
-                        note.animateIn();
+                        note.animateIn(timeSinceLastTick);
+                    }
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 200 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 125 + offset)) {
+                        note.setIfHitScore(50);
                     }
                     if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 100 + offset)
-                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 100 + offset)) {
-                        note.setHittable(true);
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 50 + offset)) {
+                        note.setIfHitScore(100);
                     }
-                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 100 + offset)
-                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 100 + note.getAnimateDuration() + offset)) {
-                        note.miss();
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 50 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 50 + offset)) {
+                        note.setIfHitScore(300);
                     }
-                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 100 + note.getAnimateDuration() + offset)
-                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 100 + 2L * note.getAnimateDuration() + offset)) {
-                        note.animateMissOut();
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 50 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 125 + offset)) {
+                        note.setIfHitScore(100);
+                    }
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 125 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + offset)) {
+                        note.setIfHitScore(50);
+                    }
+                    if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration(timeSinceLastTick) + offset)) {
+                        if (note.getHitScore() == 50) {
+                            note.animate50(timeSinceLastTick);
+                        }
+                        if (note.getHitScore() == 100) {
+                            note.animate100(timeSinceLastTick);
+                        }
+                    }
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration(timeSinceLastTick) + offset)) {
+                        note.miss(timeSinceLastTick);
+                    }
+                    if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration(timeSinceLastTick) + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + 2L * note.getAnimateDuration(timeSinceLastTick) + offset)) {
+                        note.animateOut(timeSinceLastTick);
                     }
                 }
             }
