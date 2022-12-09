@@ -1,5 +1,7 @@
 package org.cis1200.osus;
 
+import java.awt.*;
+
 public abstract class HitObj extends GameObj implements Comparable {
 
     /**
@@ -12,35 +14,74 @@ public abstract class HitObj extends GameObj implements Comparable {
      * @param beat
      */
 
-    public abstract void animateIn(long getTimeSinceLastTick);
+    final private int quarterNote;
+    private boolean hit = false;
+    private boolean miss = false;
+    private int hitScore = 0;
+    private int ifHitScore = 0; // 0 = unhittable, 50 = bad, 100 = good, 300 = perfect
 
-    public abstract void hit();
+    public HitObj(int posX, int posY, int width, int height, int quarterNote) {
+        super(posX, posY,
+                width, height);
 
-    public abstract void miss(long getTimeSinceLastTick);
+        this.quarterNote = quarterNote;
+    }
 
-    public abstract void animate100(long getTimeSinceLastTick);
+    public abstract void animateIn(long timeSinceLastTick);
 
-    public abstract void animate50(long getTimeSinceLastTick);
+    public abstract void animateHit();
 
-    public abstract void animateOut(long getTimeSinceLastTIck);
+    public abstract void animate100(long timeSinceLastTick);
 
-    public abstract long getAnimateDuration(long getTimeSinceLastTick);
+    public abstract void animate50(long timeSinceLastTick);
 
-    public abstract int getQuarterNote();
+    public abstract void animateMiss(long timeSinceLastTick);
 
-    public abstract boolean getHit();
+    public abstract void animateOut(long timeSinceLastTick);
 
-    public abstract boolean getMissed();
+    public abstract long getAnimateDuration(long timeSinceLastTick);
 
-    public abstract int getHitScore();
+    public void hit() {
+        this.ifHitScore = 0;
+        this.hit = true;
+    }
 
-    public abstract void setHitScore(int hitScore);
+    public void miss() {
+        this.ifHitScore = 0;
+        this.miss = true;
+    }
 
-    public abstract int getIfHitScore();
+    public int getQuarterNote() {
+        return this.quarterNote;
+    }
 
-    public abstract void setIfHitScore(int ifHitScore);
+    public boolean getHit() {
+        return this.hit;
+    }
 
-    public HitObj(int px, int py, int width, int height, int beat) {
-        super(px, py, width, height);
+    public boolean getMiss() {
+        return this.miss;
+    }
+
+    public int getHitScore() {
+        return this.hitScore;
+    }
+
+    public void setHitScore(int hitScore) {
+        this.hitScore = hitScore;
+    }
+
+    public int getIfHitScore() {
+        return this.ifHitScore;
+    }
+
+    public void setIfHitScore(int ifHitScore) {
+        this.ifHitScore = ifHitScore;
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        Circle other = (Circle) o;
+        return this.getQuarterNote() - other.getQuarterNote();
     }
 }

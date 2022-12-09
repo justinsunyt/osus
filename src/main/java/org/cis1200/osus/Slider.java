@@ -6,7 +6,7 @@ import java.awt.*;
  * A basic game object starting in the upper left corner of the game court. It
  * is displayed as a circle of a specified color.
  */
-public class Circle extends HitObj {
+public class Slider extends HitObj {
     final private Color color;
     final private String number;
     final private int cs;
@@ -16,7 +16,7 @@ public class Circle extends HitObj {
     private int fiftyOpacity = 0;
     private int missOpacity = 0;
 
-    public Circle(int posX, int posY, int quarterNote, int cs, int ar, int number, Color color) {
+    public Slider(int posX, int posY, int quarterNote, int cs, int ar, int number, Color color) {
         super(ScreenSize.SCREEN_WIDTH / 100 * posX, ScreenSize.SCREEN_HEIGHT / 100 * posY, ScreenSize.SCREEN_WIDTH / (3 * cs), ScreenSize.SCREEN_WIDTH / (3 * cs), quarterNote);
 
         this.cs = cs;

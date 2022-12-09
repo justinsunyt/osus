@@ -66,6 +66,7 @@ public class GameScreen extends JPanel {
                                     currentCircle.setHitScore(100);
                                 }
                                 currentCircle.hit();
+                                currentCircle.animateHit();
                                 Sound.playSound("files/sounds/hit.wav");
                             }
                         }
@@ -147,7 +148,7 @@ public class GameScreen extends JPanel {
             if (currentCircle == null) {
                 currentCircle = notes.first();
             } else {
-                if (currentCircle.getHit() || currentCircle.getMissed()) {
+                if (currentCircle.getHit() || currentCircle.getMiss()) {
                     currentCircle = notes.higher(currentCircle);
                 }
             }
@@ -190,7 +191,8 @@ public class GameScreen extends JPanel {
                     }
                     if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
                             && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration(timeSinceLastTick) + offset)) {
-                        note.miss(timeSinceLastTick);
+                        note.miss();
+                        note.animateMiss(timeSinceLastTick);
                     }
                     if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration(timeSinceLastTick) + offset)
                             && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + 2L * note.getAnimateDuration(timeSinceLastTick) + offset)) {
