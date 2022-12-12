@@ -191,12 +191,13 @@ public class GameScreen extends JPanel {
         this.notes.add(c2);
         this.notes.add(c3);
 
-        // this.notes.add(new Slider(40, 40, 30, false, 18, 16, 5, 8, 4, new Color(255,
-        // 0, 255, 150)));
+         this.notes.add(new Slider(40, 40, 30, false, 18, 4, 5, 8, 4, new Color(255,
+         0, 255, 150)));
+
         // for loop that adds one two jumps
         for (int i = 1; i < 500; i++) {
-            this.notes.add(new Circle(40, 40, 10 + 8 * i, 5, 8, 5, new Color(255, 0, 0, 150)));
-            this.notes.add(new Circle(60, 60, 14 + 8 * i, 5, 8, 6, new Color(255, 0, 0, 150)));
+            this.notes.add(new Circle(40, 40, 18 + 8 * i, 5, 8, 5, new Color(255, 0, 0, 150)));
+            this.notes.add(new Circle(60, 60, 22 + 8 * i, 5, 8, 6, new Color(255, 0, 0, 150)));
         }
 
         this.bpm = 180;
