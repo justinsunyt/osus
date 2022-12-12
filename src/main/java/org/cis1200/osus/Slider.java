@@ -80,7 +80,7 @@ public class Slider extends Note {
     public void animateApproachCircle(int bpm, long timeSinceLastTick) {
         this.approachCircleOpacity = 255;
         if (this.approachCircleLocation < this.length) {
-            this.approachCircleLocation += Math.min(this.length - this.approachCircleLocation, (float) this.length / (float) (this.noteLength * 15000L / bpm / timeSinceLastTick));
+            this.approachCircleLocation += Math.min(this.length - this.approachCircleLocation, (float) 1.2 * this.length / (float) (this.noteLength * 15000L / bpm / timeSinceLastTick));
         }
     }
 

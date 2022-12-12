@@ -29,6 +29,10 @@ public class GameScreen extends JPanel {
     private long startTime;
     private long lastTick;
     private boolean songStarted = false;
+    private int score;
+    private int combo;
+    private int rawScore;
+    private int totalRawScore;
 
     // Update interval for timer, in milliseconds
     public static final int INTERVAL = 1000/240;
@@ -65,8 +69,17 @@ public class GameScreen extends JPanel {
                                 if (currentNote.getIfHitScore() == 100) {
                                     currentNote.setHitScore(100);
                                 }
+                                if (currentNote.getIfHitScore() == 300) {
+                                    currentNote.setHitScore(300);
+                                }
                                 currentNote.hit();
                                 currentNote.animateHit();
+                                if (currentNote.getClass() == Circle.class) {
+                                    combo += 1;
+                                    score += combo * currentNote.getHitScore();
+                                    rawScore += currentNote.getHitScore();
+                                    totalRawScore += 300;
+                                }
                             }
                         }
                     }
@@ -97,6 +110,9 @@ public class GameScreen extends JPanel {
                                     if (currentNote.getIfHitScore() == 100) {
                                         currentNote.setHitScore(100);
                                     }
+                                    if (currentNote.getIfHitScore() == 300) {
+                                        currentNote.setHitScore(300);
+                                    }
                                 } else {
                                     currentNote.setHitScore(100);
                                 }
@@ -112,6 +128,9 @@ public class GameScreen extends JPanel {
                                     if (currentNote.getIfHitScore() == 100) {
                                         currentNote.setHitScore(100);
                                     }
+                                    if (currentNote.getIfHitScore() == 300) {
+                                        currentNote.setHitScore(300);
+                                    }
                                 } else {
                                     currentNote.setHitScore(100);
                                 }
@@ -120,6 +139,10 @@ public class GameScreen extends JPanel {
                             }
                         }
                         currentSlider.release();
+                        combo += 1;
+                        score += combo * currentNote.getHitScore();
+                        rawScore += currentNote.getHitScore();
+                        totalRawScore += 300;
                     }
                 }
             }
@@ -198,6 +221,12 @@ public class GameScreen extends JPanel {
                             && timeDelta <= (note.getQuarterNote() * 15000L / bpm + offset)) {
                         note.animateIn(timeSinceLastTick);
                     }
+                    if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
+                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration() + offset)) {
+                        note.miss();
+                        note.animateMiss(timeSinceLastTick);
+                        combo = 0;
+                    }
                     if (note.getClass() == Circle.class) {
                         if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 200 + offset)
                                 && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 125 + offset)) {
@@ -227,11 +256,6 @@ public class GameScreen extends JPanel {
                             if (note.getHitScore() == 100) {
                                 note.animate100(timeSinceLastTick);
                             }
-                        }
-                        if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration() + offset)) {
-                            note.miss();
-                            note.animateMiss(timeSinceLastTick);
                         }
                         if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration() + offset)
                                 && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + 2L * note.getAnimateDuration() + offset)) {
@@ -265,7 +289,7 @@ public class GameScreen extends JPanel {
                                 note.animate100(timeSinceLastTick);
                             }
                         }
-                        if (!slider.getMiss() && !slider.getReleased() && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength() + 1) * 15000L / bpm + offset)) {
+                        if (!slider.getMiss() && !slider.getReleased() && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength()) * 15000L / bpm + offset)) {
                             slider.release();
                             if (slider.getHorizontal()) {
                                 if (mouseX >= slider.getPx() + slider.getApproachCircleLocation() - slider.getWidth() / 2 && mouseX <= slider.getPx() + slider.getApproachCircleLocation() + slider.getWidth() / 2) {
@@ -288,15 +312,14 @@ public class GameScreen extends JPanel {
                                     note.setHitScore(100);
                                 }
                             }
+                            combo += 1;
+                            score += combo * currentNote.getHitScore();
+                            rawScore += currentNote.getHitScore();
+                            totalRawScore += 300;
                         }
                         if (timeDelta >= ((note.getQuarterNote() + slider.getNoteLength()) * 15000L / bpm + note.getAnimateDuration() + offset)
                                 && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength()) * 15000L / bpm + 2L * note.getAnimateDuration() + offset)) {
                             note.animateOut(timeSinceLastTick);
-                        }
-                        if (!note.getHit() && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200 + note.getAnimateDuration() + offset)) {
-                            note.miss();
-                            note.animateMiss(timeSinceLastTick);
                         }
                     }
                 }
@@ -313,6 +336,23 @@ public class GameScreen extends JPanel {
         }
         startButton.draw(g);
         cursor.draw(g);
+        if (playing) {
+            g.setColor(Color.WHITE);
+            Font numberFont = new Font("Roboto", Font.BOLD, 50);
+            FontMetrics metrics = g.getFontMetrics(numberFont);
+            g.setFont(numberFont);
+            g.drawString(String.valueOf(score), ScreenSize.SCREEN_WIDTH - metrics.stringWidth(String.valueOf(score)) - 30, 70);
+            g.drawString(combo + "X", ScreenSize.SCREEN_WIDTH - metrics.stringWidth(combo + "X") - 30, ScreenSize.SCREEN_HEIGHT - metrics.getHeight() - 70);
+            numberFont = new Font("Roboto", Font.BOLD, 30);
+            metrics = g.getFontMetrics(numberFont);
+            g.setFont(numberFont);
+            if (totalRawScore == 0) {
+                g.drawString("0%", ScreenSize.SCREEN_WIDTH - metrics.stringWidth("0%") - 30, 120);
+            } else {
+                String accuracy = Math.round((float) (rawScore * 100 / totalRawScore) * 100.0) / 100.0  + "%";
+                g.drawString(accuracy, ScreenSize.SCREEN_WIDTH - metrics.stringWidth(accuracy) - 30, 130);
+            }
+        }
     }
 
     @Override
