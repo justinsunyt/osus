@@ -6,7 +6,7 @@ import java.awt.*;
  * A basic game object starting in the upper left corner of the game court. It
  * is displayed as a circle of a specified color.
  */
-public class Circle extends HitObj {
+public class Circle extends Note {
     final private Color color;
     final private String number;
     final private int cs;
@@ -66,8 +66,8 @@ public class Circle extends HitObj {
         }
     }
 
-    public long getAnimateDuration(long timeSinceLastTick) {
-        return 255 / this.ar * 15 + 3 * timeSinceLastTick;
+    public long getAnimateDuration() {
+        return 255 / this.ar * 15 + 140;
     }
 
     @Override
@@ -78,6 +78,8 @@ public class Circle extends HitObj {
         g.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha() * opacity / 255));
         g.fillOval(this.getPx() - (int) (this.getWidth() * 0.9) / 2, this.getPy() - (int) (this.getWidth() * 0.9) / 2, (int) (this.getWidth() * 0.9), (int) (this.getHeight() * 0.9));
         g.setColor(new Color(255, 255, 255, opacity));
+
+        // number
         Font numberFont = new Font("Roboto", Font.BOLD, this.cs * 8);
         FontMetrics metrics = g.getFontMetrics(numberFont);
         g.setFont(numberFont);

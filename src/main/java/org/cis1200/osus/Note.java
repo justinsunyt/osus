@@ -1,8 +1,6 @@
 package org.cis1200.osus;
 
-import java.awt.*;
-
-public abstract class HitObj extends GameObj implements Comparable {
+public abstract class Note extends GameObj implements Comparable {
 
     /**
      * Constructor
@@ -20,7 +18,7 @@ public abstract class HitObj extends GameObj implements Comparable {
     private int hitScore = 0;
     private int ifHitScore = 0; // 0 = unhittable, 50 = bad, 100 = good, 300 = perfect
 
-    public HitObj(int posX, int posY, int width, int height, int quarterNote) {
+    public Note(int posX, int posY, int width, int height, int quarterNote) {
         super(posX, posY,
                 width, height);
 
@@ -39,11 +37,12 @@ public abstract class HitObj extends GameObj implements Comparable {
 
     public abstract void animateOut(long timeSinceLastTick);
 
-    public abstract long getAnimateDuration(long timeSinceLastTick);
+    public abstract long getAnimateDuration();
 
     public void hit() {
         this.ifHitScore = 0;
         this.hit = true;
+        Sound.playSound("files/sounds/hit.wav");
     }
 
     public void miss() {
@@ -81,7 +80,7 @@ public abstract class HitObj extends GameObj implements Comparable {
 
     @Override
     public int compareTo(Object o) {
-        Circle other = (Circle) o;
+        Note other = (Note) o;
         return this.getQuarterNote() - other.getQuarterNote();
     }
 }
