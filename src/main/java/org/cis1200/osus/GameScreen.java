@@ -3,6 +3,7 @@ package org.cis1200.osus;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.TreeSet;
 
 /**
@@ -18,7 +19,7 @@ public class GameScreen extends JPanel {
     private final TreeSet<Note> notes = new TreeSet<>();
     private Note currentNote;
     private final Cursor cursor = new Cursor(0, 0, 30, 30);
-    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH - 200, ScreenSize.SCREEN_HEIGHT - 300, 200, 200, "files/images/start.png");
+    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH - 250, ScreenSize.SCREEN_HEIGHT - 300, 200, 200, "files/images/start.png");
 
     private boolean playing = false; // whether the game is running
     private int bpm;
@@ -168,7 +169,12 @@ public class GameScreen extends JPanel {
         this.notes.add(c2);
         this.notes.add(c3);
 
-        this.notes.add(new Slider(40, 40, 30, false, 18, 16, 5, 8, 4, new Color(255, 0, 255, 150)));
+//        this.notes.add(new Slider(40, 40, 30, false, 18, 16, 5, 8, 4, new Color(255, 0, 255, 150)));
+        // for loop that adds one two jumps
+        for (int i = 1; i < 500; i++) {
+            this.notes.add(new Circle(40, 40, 10 + 8 * i, 5, 8, 5, new Color(255, 0, 0, 150)));
+            this.notes.add(new Circle(60, 60, 14 + 8 * i, 5, 8, 6, new Color(255, 0, 0, 150)));
+        }
 
         this.bpm = 180;
         this.beatmap = "files/beatmaps/sunglow.wav";
@@ -331,11 +337,19 @@ public class GameScreen extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        for (Note note : notes.descendingSet()) {
+        TreeSet<Note> drawNotes = new TreeSet<>();
+        ArrayList<Note> noteList = new ArrayList<>(notes);
+        for (Note note : notes) {
+            if (currentNote != null) {
+                if (noteList.indexOf(note) >= noteList.indexOf(currentNote) - 20 && noteList.indexOf(note) <= noteList.indexOf(currentNote) + 20) {
+                    drawNotes.add(note);
+                }
+            }
+        }
+        for (Note note : drawNotes.descendingSet()) {
             note.draw(g);
         }
         startButton.draw(g);
-        cursor.draw(g);
         if (playing) {
             g.setColor(Color.WHITE);
             Font numberFont = new Font("Lato", Font.BOLD, 50);
@@ -356,14 +370,16 @@ public class GameScreen extends JPanel {
             g.setColor(Color.WHITE);
             Font titleFont = new Font("Lato", Font.BOLD, 50);
             g.setFont(titleFont);
-            g.drawString("osus!", 30, 70);
+            g.drawString("osus!", 50, 100);
             Font instructionsFont = new Font("Lato", Font.BOLD, 20);
             FontMetrics metrics = g.getFontMetrics(instructionsFont);
             g.setFont(instructionsFont);
-            g.drawString("Click the circles to the beat of the song! Drag the cursor over the circles, and press Z or X to click or hold for sliders.", 30, 130);
-            g.drawString("When you hit multiple notes in a row, you'll gain a combo. The bigger your combo, the greater your score.", 30, 160);
-            g.drawString("When you're ready, drag the cursor over the start button and hit Z or X to begin!", 30, 190);
+            g.drawString("Click the circles to the beat of the song! Drag the cursor over the circles, and press Z or X to click or hold for sliders.", 50, 150);
+            g.drawString("When you hit multiple notes in a row, you'll gain a combo. The bigger your combo, the greater your score.", 50, 180);
+            g.drawString("If you hit the note on time, you get a 300. Otherwise, you may get a 100 or 50 depending on accuracy.", 50, 210);
+            g.drawString("When you're ready, drag the cursor over the sus! circle and hit Z or X to begin!", 50, 240);
         }
+        cursor.draw(g);
     }
 
     @Override

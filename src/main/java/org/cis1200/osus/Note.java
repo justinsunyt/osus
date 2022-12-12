@@ -40,14 +40,19 @@ public abstract class Note extends GameObj implements Comparable {
     public abstract long getAnimateDuration();
 
     public void hit() {
-        this.ifHitScore = 0;
-        this.hit = true;
-        Sound.playSound("files/sounds/hit.wav");
+        if (!this.hit) {
+            this.ifHitScore = 0;
+            this.hit = true;
+            Sound.playSound("files/sounds/hit.wav");
+        }
     }
 
     public void miss() {
-        this.ifHitScore = 0;
-        this.miss = true;
+        if (!this.miss) {
+            this.ifHitScore = 0;
+            this.miss = true;
+            Sound.playSound("files/sounds/miss.wav");
+        }
     }
 
     public int getQuarterNote() {
