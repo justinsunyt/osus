@@ -136,7 +136,7 @@ public class Slider extends Note {
 
         // number
         g.setColor(new Color(255, 255, 255, opacity));
-        Font numberFont = new Font("Roboto", Font.BOLD, this.cs * 8);
+        Font numberFont = new Font("Lato", Font.BOLD, this.cs * 8);
         FontMetrics metrics = g.getFontMetrics(numberFont);
         g.setFont(numberFont);
         g.drawString(this.number, this.getPx() - metrics.stringWidth(this.number) / 2, this.getPy() - metrics.getHeight() / 2 + metrics.getAscent());

@@ -18,7 +18,7 @@ public class GameScreen extends JPanel {
     private final TreeSet<Note> notes = new TreeSet<>();
     private Note currentNote;
     private final Cursor cursor = new Cursor(0, 0, 30, 30);
-    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH / 2 - 100, ScreenSize.SCREEN_HEIGHT / 2 - 100, 200, 200, "files/images/start.png");
+    private final Button startButton = new Button(ScreenSize.SCREEN_WIDTH - 200, ScreenSize.SCREEN_HEIGHT - 300, 200, 200, "files/images/start.png");
 
     private boolean playing = false; // whether the game is running
     private int bpm;
@@ -338,12 +338,12 @@ public class GameScreen extends JPanel {
         cursor.draw(g);
         if (playing) {
             g.setColor(Color.WHITE);
-            Font numberFont = new Font("Roboto", Font.BOLD, 50);
+            Font numberFont = new Font("Lato", Font.BOLD, 50);
             FontMetrics metrics = g.getFontMetrics(numberFont);
             g.setFont(numberFont);
             g.drawString(String.valueOf(score), ScreenSize.SCREEN_WIDTH - metrics.stringWidth(String.valueOf(score)) - 30, 70);
             g.drawString(combo + "X", ScreenSize.SCREEN_WIDTH - metrics.stringWidth(combo + "X") - 30, ScreenSize.SCREEN_HEIGHT - metrics.getHeight() - 70);
-            numberFont = new Font("Roboto", Font.BOLD, 30);
+            numberFont = new Font("Lato", Font.BOLD, 30);
             metrics = g.getFontMetrics(numberFont);
             g.setFont(numberFont);
             if (totalRawScore == 0) {
@@ -352,6 +352,17 @@ public class GameScreen extends JPanel {
                 String accuracy = Math.round((float) (rawScore * 100 / totalRawScore) * 100.0) / 100.0  + "%";
                 g.drawString(accuracy, ScreenSize.SCREEN_WIDTH - metrics.stringWidth(accuracy) - 30, 130);
             }
+        } else {
+            g.setColor(Color.WHITE);
+            Font titleFont = new Font("Lato", Font.BOLD, 50);
+            g.setFont(titleFont);
+            g.drawString("osus!", 30, 70);
+            Font instructionsFont = new Font("Lato", Font.BOLD, 20);
+            FontMetrics metrics = g.getFontMetrics(instructionsFont);
+            g.setFont(instructionsFont);
+            g.drawString("Click the circles to the beat of the song! Drag the cursor over the circles, and press Z or X to click or hold for sliders.", 30, 130);
+            g.drawString("When you hit multiple notes in a row, you'll gain a combo. The bigger your combo, the greater your score.", 30, 160);
+            g.drawString("When you're ready, drag the cursor over the start button and hit Z or X to begin!", 30, 190);
         }
     }
 

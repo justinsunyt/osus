@@ -18,7 +18,7 @@ public class RunOsus implements Runnable {
 
         // Top-level frame in which game components live.
         // Be sure to change "TOP LEVEL FRAME" to the name of your game
-        final JFrame frame = new JFrame("sus");
+        final JFrame frame = new JFrame("osus!");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setVisible(true);
 
