@@ -262,6 +262,7 @@ public class GameScreen extends JPanel {
                         note.miss();
                         note.animateMiss(timeSinceLastTick);
                         combo = 0;
+                        totalRawScore += 300;
                     }
                     if (note.getClass() == Circle.class) {
                         if (!note.getHit()
@@ -454,7 +455,7 @@ public class GameScreen extends JPanel {
             if (totalRawScore == 0) {
                 g.drawString("0%", Screen.SCREEN_WIDTH - metrics.stringWidth("0%") - 30, 120);
             } else {
-                String accuracy = Math.round((float) (rawScore * 100 / totalRawScore) * 100.0)
+                String accuracy = Math.round((rawScore * 100.0 / totalRawScore) * 100.0)
                         / 100.0 + "%";
                 g.drawString(
                         accuracy, Screen.SCREEN_WIDTH - metrics.stringWidth(accuracy) - 30, 130
