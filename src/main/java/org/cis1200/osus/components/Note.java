@@ -1,17 +1,8 @@
-package org.cis1200.osus;
+package org.cis1200.osus.components;
+
+import org.cis1200.osus.utils.Sound;
 
 public abstract class Note extends GameObj implements Comparable {
-
-    /**
-     * Constructor
-     *
-     * @param px
-     * @param py
-     * @param width
-     * @param height
-     * @param beat
-     */
-
     final private int quarterNote;
     private boolean hit = false;
     private boolean miss = false;
@@ -19,8 +10,10 @@ public abstract class Note extends GameObj implements Comparable {
     private int ifHitScore = 0; // 0 = unhittable, 50 = bad, 100 = good, 300 = perfect
 
     public Note(int posX, int posY, int width, int height, int quarterNote) {
-        super(posX, posY,
-                width, height);
+        super(
+                posX, posY,
+                width, height
+        );
 
         this.quarterNote = quarterNote;
     }

@@ -1,32 +1,24 @@
-package org.cis1200.osus;
+package org.cis1200.osus.components;
 
 import java.awt.*;
 
 /**
  * An object in the game.
  *
- * Game objects exist in the game court. They have a position, velocity, size
- * and bounds. Their velocity controls how they move; their position should
- * always be within their bounds.
+ * Game objects exist in the game court. They have a position and size.
  */
 public abstract class GameObj {
     /*
      * Current position of the object (in terms of graphics coordinates)
      *
-     * Coordinates are given by the upper-left hand corner of the object. This
-     * position should always be within bounds:
-     * 0 <= px <= maxX 0 <= py <= maxY
+     * Coordinates are given by the upper-left hand corner of the object.
      */
     private int px;
     private int py;
 
-    /* Size of object, in pixels. */
     private final int width;
     private final int height;
 
-    /**
-     * Constructor
-     */
     public GameObj(
             int px, int py, int width, int height
     ) {
@@ -36,9 +28,6 @@ public abstract class GameObj {
         this.height = height;
     }
 
-    // **********************************************************************************
-    // * GETTERS
-    // **********************************************************************************
     public int getPx() {
         return this.px;
     }
@@ -55,9 +44,6 @@ public abstract class GameObj {
         return this.height;
     }
 
-    // **************************************************************************
-    // * SETTERS
-    // **************************************************************************
     public void setPx(int px) {
         this.px = px;
     }
@@ -65,8 +51,6 @@ public abstract class GameObj {
     public void setPy(int py) {
         this.py = py;
     }
-
-
 
     /**
      * Default draw method that provides how the object should be drawn in the

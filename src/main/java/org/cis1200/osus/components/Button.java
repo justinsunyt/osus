@@ -1,22 +1,14 @@
-package org.cis1200.osus;
+package org.cis1200.osus.components;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-public class Button extends GameObj{
+public class Button extends GameObj {
     private BufferedImage image;
     private boolean disabled = false;
 
-    /**
-     * Constructor
-     *
-     * @param px
-     * @param py
-     * @param width
-     * @param height
-     */
     public Button(int px, int py, int width, int height, String file) {
         super(px, py, width, height);
         try {

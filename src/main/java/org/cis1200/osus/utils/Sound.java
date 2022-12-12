@@ -1,11 +1,13 @@
-package org.cis1200.osus;
+package org.cis1200.osus.utils;
+
 import java.io.*;
 import javax.sound.sampled.*;
 
 public class Sound {
     public static void playSound(String soundName) {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+            AudioInputStream audioInputStream = AudioSystem
+                    .getAudioInputStream(new File(soundName).getAbsoluteFile());
             Clip clip = AudioSystem.getClip();
             clip.open(audioInputStream);
             FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);

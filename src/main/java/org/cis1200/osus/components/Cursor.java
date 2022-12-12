@@ -1,8 +1,8 @@
-package org.cis1200.osus;
+package org.cis1200.osus.components;
 
 import java.awt.*;
 
-public class Cursor extends GameObj{
+public class Cursor extends GameObj {
 
     /**
      * Constructor
