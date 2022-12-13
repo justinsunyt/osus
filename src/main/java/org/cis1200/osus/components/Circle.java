@@ -95,7 +95,7 @@ public class Circle extends Note {
         g.setColor(new Color(255, 255, 255, opacity));
 
         // number
-        Font numberFont = new Font("Lato", Font.BOLD, this.cs * 8);
+        Font numberFont = new Font("Lato", Font.BOLD, 200 / this.cs);
         FontMetrics metrics = g.getFontMetrics(numberFont);
         g.setFont(numberFont);
         g.drawString(

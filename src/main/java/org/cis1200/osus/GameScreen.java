@@ -30,6 +30,7 @@ public class GameScreen extends JPanel {
 
     private TreeSet<Note> notes = new TreeSet<>();
     private Note currentNote;
+    private Sound song;
     private boolean playing = false; // whether the beatmap is playing
     private boolean paused = false; // whether the beatmap is paused
     private boolean ended = false; // whether the beatmap has ended
@@ -43,7 +44,10 @@ public class GameScreen extends JPanel {
     private int cs; // song circle size
     private long offset; // beatmap offset
     private long length; // song length
+    private long timeDelta; // time delta between the start of the beatmap and the current time
+    private long pauseDelta;
     private long startTime;
+    private long pauseTime;
     private long lastTick;
     private boolean songStarted = false;
     private int score;
@@ -68,49 +72,58 @@ public class GameScreen extends JPanel {
                     FileLineIterator fileLineIterator = new FileLineIterator(
                             "files/beatmaps/" + beatmapTextField.getText() + ".txt"
                     );
+                    song = new Sound("files/beatmaps/" + beatmapTextField.getText() + ".wav");
                     beatmap = beatmapTextField.getText();
                     while (fileLineIterator.hasNext()) {
                         String line = fileLineIterator.next();
                         String[] strings = line.split(", ");
-                        if (strings[0].equals("D")) {
-                            name = strings[1];
-                            bpm = Integer.parseInt(strings[2]);
-                            ar = Integer.parseInt(strings[3]);
-                            cs = Integer.parseInt(strings[4]);
-                            offset = Integer.parseInt(strings[5]);
-                            length = Integer.parseInt(strings[6]) * 1000L;
-                        }
-                        if (strings[0].equals("C")) {
-                            notes.add(
-                                    new Circle(
-                                            Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                                            Integer.parseInt(strings[3]), ar, cs,
-                                            Integer.parseInt(strings[4]),
-                                            new Color(
-                                                    Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
-                                                    Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
-                                            )
-                                    )
-                            );
-                        }
-                        if (strings[0].equals("S")) {
-                            notes.add(
-                                    new Slider(
-                                            Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                                            Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
-                                            Integer.parseInt(strings[6]), ar, cs,
-                                            Integer.parseInt(strings[7]),
-                                            new Color(
-                                                    Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
-                                                    Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
-                                            )
-                                    )
-                            );
+                        try {
+                            if (strings[0].equals("D") && strings.length == 7) {
+                                name = strings[1];
+                                bpm = Integer.parseInt(strings[2]);
+                                ar = Integer.parseInt(strings[3]);
+                                cs = Integer.parseInt(strings[4]);
+                                offset = Integer.parseInt(strings[5]);
+                                length = Integer.parseInt(strings[6]) * 1000L;
+                            }
+                            if (strings[0].equals("C") && strings.length == 9) {
+                                notes.add(
+                                        new Circle(
+                                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                                Integer.parseInt(strings[3]), ar, cs,
+                                                Integer.parseInt(strings[4]),
+                                                new Color(
+                                                        Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
+                                                        Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
+                                                )
+                                        )
+                                );
+                            }
+                            if (strings[0].equals("S") && strings.length == 12) {
+                                notes.add(
+                                        new Slider(
+                                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                                Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
+                                                Integer.parseInt(strings[6]), ar, cs,
+                                                Integer.parseInt(strings[7]),
+                                                new Color(
+                                                        Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
+                                                        Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
+                                                )
+                                        )
+                                );
+                            }
+                        } catch (Exception ex) {
+                            error = true;
                         }
                     }
-                    error = false;
-                    beatmapButton.getParent().remove(beatmapTextField);
-                    beatmapButton.getParent().remove(beatmapButton);
+                    if (name == null || bpm == 0 || ar == 0 || cs == 0 || offset == 0 || length == 0) {
+                        error = true;
+                    } else {
+                        error = false;
+                        beatmapButton.getParent().remove(beatmapTextField);
+                        beatmapButton.getParent().remove(beatmapButton);
+                    }
                 } catch (IllegalArgumentException ex) {
                     error = true;
                 }
@@ -172,7 +185,7 @@ public class GameScreen extends JPanel {
                                     playing = true;
                                     startTime = System.currentTimeMillis();
                                     startButton.setEnabled(false);
-                                    Sound.playSound("files/sounds/start.wav");
+                                    new Sound("files/sounds/start.wav").play();
                                 }
                             }
                         }
@@ -202,7 +215,15 @@ public class GameScreen extends JPanel {
                         add(beatmapButton);
                     }
                     if (playing) {
-                        paused = true;
+                        if (!paused) {
+                            paused = true;
+                            pauseTime = System.currentTimeMillis();
+                            song.pause();
+                        } else {
+                            paused = false;
+                            pauseDelta += System.currentTimeMillis() - pauseTime;
+                            song.play();
+                        }
                     }
                 }
             }
@@ -298,206 +319,208 @@ public class GameScreen extends JPanel {
      * triggers.
      */
     void tick(ActionEvent e) {
-        long timeDelta = e.getWhen() - startTime;
-        long timeSinceLastTick = e.getWhen() - lastTick;
-        lastTick = e.getWhen();
-
         if (playing) {
+            long timeSinceLastTick = e.getWhen() - lastTick;
+            lastTick = e.getWhen();
+            if (!paused) {
+                timeDelta = e.getWhen() - startTime - pauseDelta;
 
-            // play song 1 second after clicking play
-            if (timeDelta >= 1000 && !songStarted) {
-                Sound.playSound("files/beatmaps/" + beatmap + ".wav");
-                songStarted = true;
-            }
+                // play song 1 second after clicking play
+                if (timeDelta >= 1000 && !songStarted) {
+                    song.play();
+                    songStarted = true;
+                }
 
-            if (timeDelta >= 1000 + length) {
-                ended = true;
-                playing = false;
-            }
+                if (timeDelta >= 1000 + length) {
+                    song.pause();
+                    ended = true;
+                    playing = false;
+                }
 
-            // set currentNote
-            if (currentNote == null) {
-                currentNote = notes.first();
-            } else {
-                if (currentNote.getClass() == Circle.class) {
-                    if (currentNote.getHit() || currentNote.getMiss()) {
-                        currentNote = notes.higher(currentNote);
-                    }
+                // set currentNote
+                if (currentNote == null) {
+                    currentNote = notes.first();
                 } else {
-                    Slider currentSlider = (Slider) currentNote;
-                    if (currentSlider.getHit() && currentSlider.getReleased()
-                            || currentSlider.getMiss()) {
-                        currentNote = notes.higher(currentNote);
+                    if (currentNote.getClass() == Circle.class) {
+                        if (currentNote.getHit() || currentNote.getMiss()) {
+                            currentNote = notes.higher(currentNote);
+                        }
+                    } else {
+                        Slider currentSlider = (Slider) currentNote;
+                        if (currentSlider.getHit() && currentSlider.getReleased()
+                                || currentSlider.getMiss()) {
+                            currentNote = notes.higher(currentNote);
+                        }
                     }
                 }
-            }
 
-            // note timing logic!
-            if (notes != null) {
-                for (Note note : notes) {
-                    if (!note.getHit()
-                            && timeDelta >= (note.getQuarterNote() * 15000L / bpm
-                                    - note.getAnimateDuration() + offset)
-                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + offset)) {
-                        note.animateIn(timeSinceLastTick);
-                    }
-                    if (!note.getHit()
-                            && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
-                            && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
-                                    + note.getAnimateDuration() + offset)) {
-                        if (!note.getMiss()) {
-                            combo = 0;
-                            totalRawScore += 300;
-                        }
-                        note.miss();
-                        note.animateMiss(timeSinceLastTick);
-                    }
-                    if (note.getClass() == Circle.class) {
+                // note timing logic!
+                if (notes != null) {
+                    for (Note note : notes) {
                         if (!note.getHit()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 200
-                                        + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 125
-                                        + offset)) {
-                            note.setIfHitScore(50);
-                        }
-                        if (!note.getHit()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 100
-                                        + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 50
-                                        + offset)) {
-                            note.setIfHitScore(100);
-                        }
-                        if (!note.getHit()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 50 + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 50
-                                        + offset)) {
-                            note.setIfHitScore(300);
-                        }
-                        if (!note.getHit()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 50 + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 125
-                                        + offset)) {
-                            note.setIfHitScore(100);
-                        }
-                        if (!note.getHit()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 125
-                                        + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
-                                        + offset)) {
-                            note.setIfHitScore(50);
-                        }
-                        if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
-                                        + note.getAnimateDuration() + offset)) {
-                            if (note.getHitScore() == 50) {
-                                note.animate50(timeSinceLastTick);
-                            }
-                            if (note.getHitScore() == 100) {
-                                note.animate100(timeSinceLastTick);
-                            }
-                        }
-                        if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200
-                                + note.getAnimateDuration() + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
-                                        + 2L * note.getAnimateDuration() + offset)) {
-                            note.animateOut(timeSinceLastTick);
-                        }
-                    }
-                    if (note.getClass() == Slider.class) {
-                        Slider slider = (Slider) note;
-                        if (!note.getHit()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 200
-                                        + offset)
-                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
-                                        + offset)) {
-                            note.setIfHitScore(50);
-                        }
-                        if (note.getHit() && !slider.getReleased()
                                 && timeDelta >= (note.getQuarterNote() * 15000L / bpm
-                                        + offset)
-                                && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + offset)) {
-                            slider.animateApproachCircle(bpm, timeSinceLastTick);
+                                - note.getAnimateDuration() + offset)
+                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + offset)) {
+                            note.animateIn(timeSinceLastTick);
                         }
-                        if (!slider.getReleased()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200
-                                        + offset)
-                                && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm - 200 + offset)) {
-                            note.setIfHitScore(100);
-                        }
-                        if (!slider.getReleased()
-                                && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm - 200 + offset)
-                                && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + offset)) {
-                            note.setIfHitScore(300);
-                        }
-                        if (slider.getReleased()
-                                && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + offset)
-                                && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + note.getAnimateDuration() + offset)) {
-                            if (note.getHitScore() == 50) {
-                                note.animate50(timeSinceLastTick);
+                        if (!note.getHit()
+                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
+                                && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
+                                + note.getAnimateDuration() + offset)) {
+                            if (!note.getMiss()) {
+                                combo = 0;
+                                totalRawScore += 300;
                             }
-                            if (note.getHitScore() == 100) {
-                                note.animate100(timeSinceLastTick);
-                            }
+                            note.miss();
+                            note.animateMiss(timeSinceLastTick);
                         }
-                        if (!slider.getMiss() && !slider.getReleased()
-                                && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + offset)) {
-                            slider.release();
-                            if (slider.getHorizontal()) {
-                                if (mouseX >= slider.getPx() + slider.getApproachCircleLocation()
-                                        - slider.getWidth() / 2
-                                        && mouseX <= slider.getPx()
-                                                + slider.getApproachCircleLocation()
-                                                + slider.getWidth() / 2) {
-                                    if (mouseY >= slider.getPy() - slider.getHeight() / 2
-                                            && mouseY <= slider.getPy()
-                                                    + slider.getApproachCircleLocation()
-                                                    + slider.getHeight() / 2) {
-                                        note.setHitScore(300);
-                                    } else {
-                                        note.setHitScore(100);
-                                    }
-                                } else {
-                                    note.setHitScore(100);
+                        if (note.getClass() == Circle.class) {
+                            if (!note.getHit()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 200
+                                    + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 125
+                                    + offset)) {
+                                note.setIfHitScore(50);
+                            }
+                            if (!note.getHit()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 100
+                                    + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm - 50
+                                    + offset)) {
+                                note.setIfHitScore(100);
+                            }
+                            if (!note.getHit()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 50 + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 50
+                                    + offset)) {
+                                note.setIfHitScore(300);
+                            }
+                            if (!note.getHit()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 50 + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 125
+                                    + offset)) {
+                                note.setIfHitScore(100);
+                            }
+                            if (!note.getHit()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 125
+                                    + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
+                                    + offset)) {
+                                note.setIfHitScore(50);
+                            }
+                            if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
+                                    + note.getAnimateDuration() + offset)) {
+                                if (note.getHitScore() == 50) {
+                                    note.animate50(timeSinceLastTick);
                                 }
-                            } else {
-                                if (mouseX >= slider.getPx() - slider.getWidth() / 2
-                                        && mouseX <= slider.getPx()
-                                                + slider.getApproachCircleLocation()
-                                                + slider.getWidth() / 2) {
-                                    if (mouseY >= slider.getPy()
+                                if (note.getHitScore() == 100) {
+                                    note.animate100(timeSinceLastTick);
+                                }
+                            }
+                            if (timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200
+                                    + note.getAnimateDuration() + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
+                                    + 2L * note.getAnimateDuration() + offset)) {
+                                note.animateOut(timeSinceLastTick);
+                            }
+                        }
+                        if (note.getClass() == Slider.class) {
+                            Slider slider = (Slider) note;
+                            if (!note.getHit()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm - 200
+                                    + offset)
+                                    && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
+                                    + offset)) {
+                                note.setIfHitScore(50);
+                            }
+                            if (note.getHit() && !slider.getReleased()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm
+                                    + offset)
+                                    && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm + offset)) {
+                                slider.animateApproachCircle(bpm, timeSinceLastTick);
+                            }
+                            if (!slider.getReleased()
+                                    && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200
+                                    + offset)
+                                    && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm - 200 + offset)) {
+                                note.setIfHitScore(100);
+                            }
+                            if (!slider.getReleased()
+                                    && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm - 200 + offset)
+                                    && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm + offset)) {
+                                note.setIfHitScore(300);
+                            }
+                            if (slider.getReleased()
+                                    && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm + offset)
+                                    && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm + note.getAnimateDuration() + offset)) {
+                                if (note.getHitScore() == 50) {
+                                    note.animate50(timeSinceLastTick);
+                                }
+                                if (note.getHitScore() == 100) {
+                                    note.animate100(timeSinceLastTick);
+                                }
+                            }
+                            if (!slider.getMiss() && !slider.getReleased()
+                                    && timeDelta >= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm + offset)) {
+                                slider.release();
+                                if (slider.getHorizontal()) {
+                                    if (mouseX >= slider.getPx() + slider.getApproachCircleLocation()
+                                            - slider.getWidth() / 2
+                                            && mouseX <= slider.getPx()
                                             + slider.getApproachCircleLocation()
-                                            - slider.getHeight() / 2
-                                            && mouseY <= slider.getPy()
-                                                    + slider.getApproachCircleLocation()
-                                                    + slider.getHeight() / 2) {
-                                        note.setHitScore(300);
+                                            + slider.getWidth() / 2) {
+                                        if (mouseY >= slider.getPy() - slider.getHeight() / 2
+                                                && mouseY <= slider.getPy()
+                                                + slider.getApproachCircleLocation()
+                                                + slider.getHeight() / 2) {
+                                            note.setHitScore(300);
+                                        } else {
+                                            note.setHitScore(100);
+                                        }
                                     } else {
                                         note.setHitScore(100);
                                     }
                                 } else {
-                                    note.setHitScore(100);
+                                    if (mouseX >= slider.getPx() - slider.getWidth() / 2
+                                            && mouseX <= slider.getPx()
+                                            + slider.getApproachCircleLocation()
+                                            + slider.getWidth() / 2) {
+                                        if (mouseY >= slider.getPy()
+                                                + slider.getApproachCircleLocation()
+                                                - slider.getHeight() / 2
+                                                && mouseY <= slider.getPy()
+                                                + slider.getApproachCircleLocation()
+                                                + slider.getHeight() / 2) {
+                                            note.setHitScore(300);
+                                        } else {
+                                            note.setHitScore(100);
+                                        }
+                                    } else {
+                                        note.setHitScore(100);
+                                    }
                                 }
+                                combo++;
+                                if (combo > maxCombo) {
+                                    maxCombo = combo;
+                                }
+                                score += combo * currentNote.getHitScore();
+                                rawScore += currentNote.getHitScore();
+                                totalRawScore += 300;
                             }
-                            combo ++;
-                            if (combo > maxCombo) {
-                                maxCombo = combo;
+                            if (timeDelta >= ((note.getQuarterNote() + slider.getNoteLength()) * 15000L
+                                    / bpm + note.getAnimateDuration() + offset)
+                                    && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
+                                    * 15000L / bpm + 2L * note.getAnimateDuration() + offset)) {
+                                note.animateOut(timeSinceLastTick);
                             }
-                            score += combo * currentNote.getHitScore();
-                            rawScore += currentNote.getHitScore();
-                            totalRawScore += 300;
-                        }
-                        if (timeDelta >= ((note.getQuarterNote() + slider.getNoteLength()) * 15000L
-                                / bpm + note.getAnimateDuration() + offset)
-                                && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + 2L * note.getAnimateDuration() + offset)) {
-                            note.animateOut(timeSinceLastTick);
                         }
                     }
                 }
@@ -551,6 +574,18 @@ public class GameScreen extends JPanel {
                         accuracy, Screen.SCREEN_WIDTH - metrics.stringWidth(accuracy) - 30, 130
                 );
             }
+
+            if (paused) {
+                g.setColor(Color.WHITE);
+                numberFont = new Font("Lato", Font.BOLD, 50);
+                metrics = g.getFontMetrics(numberFont);
+                g.setFont(numberFont);
+                g.drawString(
+                        "Press Escape to resume", Screen.SCREEN_WIDTH / 2 - metrics.stringWidth("Press Escape to resume") / 2,
+                        Screen.SCREEN_HEIGHT / 2
+                );
+            }
+
         } else if (ended) {
             g.setColor(Color.WHITE);
             Font numberFont = new Font("Lato", Font.BOLD, 50);
@@ -612,7 +647,7 @@ public class GameScreen extends JPanel {
                     "Once loaded, hover over the sus! logo and press Z or X to start! Good luck!",
                     50, 270
             );
-            if (beatmap != null) {
+            if (beatmap != null && !error) {
                 g.setColor(Color.CYAN);
                 g.drawString("Loaded: " + name, 50, 300);
             }

@@ -119,7 +119,7 @@ public class Slider extends Note {
     public void release() {
         this.released = true;
         this.approachCircleOpacity = 0;
-        Sound.playSound("files/sounds/hit.wav");
+        new Sound("files/sounds/hit.wav").play();
     }
 
     @Override
@@ -178,7 +178,7 @@ public class Slider extends Note {
 
         // number
         g.setColor(new Color(255, 255, 255, opacity));
-        Font numberFont = new Font("Lato", Font.BOLD, this.cs * 8);
+        Font numberFont = new Font("Lato", Font.BOLD, 200 / this.cs);
         FontMetrics metrics = g.getFontMetrics(numberFont);
         g.setFont(numberFont);
         g.drawString(

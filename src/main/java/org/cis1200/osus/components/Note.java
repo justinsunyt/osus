@@ -36,7 +36,7 @@ public abstract class Note extends GameObj implements Comparable {
         if (!this.hit) {
             this.ifHitScore = 0;
             this.hit = true;
-            Sound.playSound("files/sounds/hit.wav");
+            new Sound("files/sounds/hit.wav").play();
         }
     }
 
@@ -44,7 +44,7 @@ public abstract class Note extends GameObj implements Comparable {
         if (!this.miss) {
             this.ifHitScore = 0;
             this.miss = true;
-            Sound.playSound("files/sounds/miss.wav");
+            new Sound("files/sounds/miss.wav").play();
         }
     }
 
