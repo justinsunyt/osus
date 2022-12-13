@@ -5,25 +5,25 @@ import org.cis1200.osus.utils.Screen;
 import java.awt.*;
 
 public class Circle extends Note {
-    final private Color color;
-    final private String number;
-    final private int cs;
     final private int ar;
+    final private int cs;
+    final private String number;
+    final private Color color;
     private int opacity = 0;
     private int hundredOpacity = 0;
     private int fiftyOpacity = 0;
     private int missOpacity = 0;
 
-    public Circle(int posX, int posY, int quarterNote, int cs, int ar, int number, Color color) {
+    public Circle(int posX, int posY, int quarterNote, int ar, int cs, int number, Color color) {
         super(
                 Screen.SCREEN_WIDTH / 100 * posX, Screen.SCREEN_HEIGHT / 100 * posY,
                 Screen.SCREEN_WIDTH / (3 * cs), Screen.SCREEN_WIDTH / (3 * cs), quarterNote
         );
 
-        this.cs = cs;
         this.ar = ar;
-        this.color = color;
+        this.cs = cs;
         this.number = Integer.toString(number);
+        this.color = color;
     }
 
     public void animateIn(long timeSinceLastTick) {
@@ -70,7 +70,7 @@ public class Circle extends Note {
     }
 
     public long getAnimateDuration() {
-        return 255 / this.ar * 15 + 140;
+        return 255 / this.ar * 15 + 100;
     }
 
     @Override

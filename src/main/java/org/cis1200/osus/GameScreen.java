@@ -3,6 +3,7 @@ package org.cis1200.osus;
 import org.cis1200.osus.components.*;
 import org.cis1200.osus.components.Button;
 import org.cis1200.osus.components.Cursor;
+import org.cis1200.osus.utils.FileLineIterator;
 import org.cis1200.osus.utils.Screen;
 import org.cis1200.osus.utils.Sound;
 
@@ -28,10 +29,13 @@ public class GameScreen extends JPanel {
     );
 
     private boolean playing = false; // whether the game is running
-    private int bpm; // song bpm
     private int mouseX;
     private int mouseY;
     private String beatmap; // beatmap file location
+    private String name; // song name
+    private int bpm; // song bpm
+    private int ar; // song approach rate
+    private int cs; // song circle size
     private long offset; // beatmap offset
     private long startTime;
     private long lastTick;
@@ -182,27 +186,48 @@ public class GameScreen extends JPanel {
     }
 
     public void loadBeatmap() {
-        // triplet circle
-        final Circle c1 = new Circle(40, 40, 12, 5, 8, 1, new Color(255, 0, 0, 150));
-        final Circle c2 = new Circle(41, 41, 13, 5, 8, 2, new Color(255, 0, 0, 150));
-        final Circle c3 = new Circle(42, 42, 14, 5, 8, 3, new Color(255, 0, 0, 150));
-
-        this.notes.add(c1);
-        this.notes.add(c2);
-        this.notes.add(c3);
-
-         this.notes.add(new Slider(40, 40, 30, false, 18, 4, 5, 8, 4, new Color(255,
-         0, 255, 150)));
-
-        // for loop that adds one two jumps
-        for (int i = 1; i < 500; i++) {
-            this.notes.add(new Circle(40, 40, 18 + 8 * i, 5, 8, 5, new Color(255, 0, 0, 150)));
-            this.notes.add(new Circle(60, 60, 22 + 8 * i, 5, 8, 6, new Color(255, 0, 0, 150)));
+        this.beatmap = "HarumachiClover";
+        FileLineIterator fileLineIterator = new FileLineIterator(
+                "files/beatmaps/" + beatmap + ".txt"
+        );
+        while (fileLineIterator.hasNext()) {
+            String line = fileLineIterator.next();
+            String[] strings = line.split(", ");
+            if (strings[0].equals("D")) {
+                this.name = strings[1];
+                this.bpm = Integer.parseInt(strings[2]);
+                this.ar = Integer.parseInt(strings[3]);
+                this.cs = Integer.parseInt(strings[4]);
+                this.offset = Integer.parseInt(strings[5]);
+            }
+            if (strings[0].equals("C")) {
+                this.notes.add(
+                        new Circle(
+                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                Integer.parseInt(strings[3]), this.ar, this.cs,
+                                Integer.parseInt(strings[4]),
+                                new Color(
+                                        Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
+                                        Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
+                                )
+                        )
+                );
+            }
+            if (strings[0].equals("S")) {
+                this.notes.add(
+                        new Slider(
+                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
+                                Integer.parseInt(strings[6]), this.ar, this.cs,
+                                Integer.parseInt(strings[7]),
+                                new Color(
+                                        Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
+                                        Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
+                                )
+                        )
+                );
+            }
         }
-
-        this.bpm = 180;
-        this.beatmap = "files/beatmaps/sunglow.wav";
-        this.offset = -40;
     }
 
     /**
@@ -226,7 +251,7 @@ public class GameScreen extends JPanel {
 
             // play song 1 second after clicking play
             if (timeDelta >= 1000 && !songStarted) {
-                Sound.playSound(beatmap);
+                Sound.playSound("files/beatmaps/" + beatmap + ".wav");
                 songStarted = true;
             }
 
@@ -260,10 +285,12 @@ public class GameScreen extends JPanel {
                             && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200 + offset)
                             && timeDelta <= (note.getQuarterNote() * 15000L / bpm + 200
                                     + note.getAnimateDuration() + offset)) {
+                        if (!note.getMiss()) {
+                            combo = 0;
+                            totalRawScore += 300;
+                        }
                         note.miss();
                         note.animateMiss(timeSinceLastTick);
-                        combo = 0;
-                        totalRawScore += 300;
                     }
                     if (note.getClass() == Circle.class) {
                         if (!note.getHit()
@@ -326,10 +353,10 @@ public class GameScreen extends JPanel {
                             note.setIfHitScore(50);
                         }
                         if (note.getHit() && !slider.getReleased()
-                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm + 200
+                                && timeDelta >= (note.getQuarterNote() * 15000L / bpm
                                         + offset)
                                 && timeDelta <= ((note.getQuarterNote() + slider.getNoteLength())
-                                        * 15000L / bpm + 200 + offset)) {
+                                        * 15000L / bpm + offset)) {
                             slider.animateApproachCircle(bpm, timeSinceLastTick);
                         }
                         if (!slider.getReleased()

@@ -9,10 +9,10 @@ public class Slider extends Note {
     final private int length;
     final private boolean horizontal;
     final private int noteLength;
-    final private Color color;
-    final private String number;
-    final private int cs;
     final private int ar;
+    final private int cs;
+    final private String number;
+    final private Color color;
     private int opacity = 0;
     private int approachCircleOpacity = 0;
     private float approachCircleLocation = 0;
@@ -23,7 +23,7 @@ public class Slider extends Note {
 
     public Slider(
             int startX, int startY, int length, boolean horizontal, int quarterNote, int noteLength,
-            int cs, int ar, int number, Color color
+            int ar, int cs, int number, Color color
     ) {
         super(
                 Screen.SCREEN_WIDTH / 100 * startX, Screen.SCREEN_HEIGHT / 100 * startY,
@@ -33,10 +33,10 @@ public class Slider extends Note {
         this.length = Screen.SCREEN_WIDTH / 100 * length;
         this.horizontal = horizontal;
         this.noteLength = noteLength;
-        this.cs = cs;
         this.ar = ar;
-        this.color = color;
+        this.cs = cs;
         this.number = Integer.toString(number);
+        this.color = color;
     }
 
     public void animateIn(long timeSinceLastTick) {
@@ -101,7 +101,7 @@ public class Slider extends Note {
     }
 
     public long getAnimateDuration() {
-        return 255 / this.ar * 15 + 140;
+        return 255 / this.ar * 15 + 100;
     }
 
     public int getNoteLength() {
