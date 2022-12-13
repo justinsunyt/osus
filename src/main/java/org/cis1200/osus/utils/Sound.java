@@ -9,7 +9,8 @@ public class Sound {
 
     public Sound(String soundName) {
         try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(soundName).getAbsoluteFile());
+            AudioInputStream audioInputStream = AudioSystem
+                    .getAudioInputStream(new File(soundName).getAbsoluteFile());
             clip = AudioSystem.getClip();
             clip.open(audioInputStream);
             FloatControl volume = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
