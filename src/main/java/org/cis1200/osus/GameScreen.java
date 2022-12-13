@@ -20,8 +20,6 @@ import java.util.TreeSet;
  * with one another.
  */
 public class GameScreen extends JPanel {
-    private final TreeSet<Note> notes = new TreeSet<>();
-    private Note currentNote;
     private final org.cis1200.osus.components.Cursor cursor = new Cursor(0, 0, 30, 30);
     private final org.cis1200.osus.components.Button startButton = new Button(
             Screen.SCREEN_WIDTH - 250, Screen.SCREEN_HEIGHT - 300, 200, 200,
@@ -30,7 +28,11 @@ public class GameScreen extends JPanel {
     private final JTextField beatmapTextField = new JTextField(20);
     private final JButton beatmapButton = new JButton("Load Beatmap");
 
-    private boolean playing = false; // whether the game is running
+    private TreeSet<Note> notes = new TreeSet<>();
+    private Note currentNote;
+    private boolean playing = false; // whether the beatmap is playing
+    private boolean paused = false; // whether the beatmap is paused
+    private boolean ended = false; // whether the beatmap has ended
     private boolean error = false;
     private int mouseX;
     private int mouseY;
@@ -40,13 +42,15 @@ public class GameScreen extends JPanel {
     private int ar; // song approach rate
     private int cs; // song circle size
     private long offset; // beatmap offset
+    private long length; // song length
     private long startTime;
     private long lastTick;
     private boolean songStarted = false;
     private int score;
-    private int combo;
     private int rawScore; // used to calculate accuracy
     private int totalRawScore;
+    private int combo;
+    private int maxCombo;
 
     // Update interval for timer, in milliseconds
     public static final int INTERVAL = 1000 / 240;
@@ -74,6 +78,7 @@ public class GameScreen extends JPanel {
                             ar = Integer.parseInt(strings[3]);
                             cs = Integer.parseInt(strings[4]);
                             offset = Integer.parseInt(strings[5]);
+                            length = Integer.parseInt(strings[6]) * 1000L;
                         }
                         if (strings[0].equals("C")) {
                             notes.add(
@@ -147,7 +152,10 @@ public class GameScreen extends JPanel {
                                 currentNote.hit();
                                 currentNote.animateHit();
                                 if (currentNote.getClass() == Circle.class) {
-                                    combo += 1;
+                                    combo ++;
+                                    if (combo > maxCombo) {
+                                        maxCombo = combo;
+                                    }
                                     score += combo * currentNote.getHitScore();
                                     rawScore += currentNote.getHitScore();
                                     totalRawScore += 300;
@@ -155,7 +163,7 @@ public class GameScreen extends JPanel {
                             }
                         }
                     }
-                    if (!startButton.getDisabled()) {
+                    if (startButton.getEnabled()) {
                         if (mouseX >= startButton.getPx()
                                 && mouseX <= startButton.getPx() + startButton.getWidth()) {
                             if (mouseY >= startButton.getPy()
@@ -163,11 +171,38 @@ public class GameScreen extends JPanel {
                                 if (beatmap != null) {
                                     playing = true;
                                     startTime = System.currentTimeMillis();
-                                    startButton.setDisabled();
+                                    startButton.setEnabled(false);
                                     Sound.playSound("files/sounds/start.wav");
                                 }
                             }
                         }
+                    }
+                }
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    if (ended) {
+                        notes = new TreeSet<>();
+                        currentNote = null;
+                        beatmap = null; // beatmap file location
+                        name = null; // song name
+                        bpm = 0; // song bpm
+                        ar = 0; // song approach rate
+                        cs = 0; // song circle size
+                        offset = 0; // beatmap offset
+                        length = 0; // song length
+                        startTime = 0;
+                        lastTick = 0;
+                        songStarted = false;
+                        score = 0;
+                        rawScore = 0; // used to calculate accuracy
+                        totalRawScore = 0;
+                        combo = 0;
+                        maxCombo = 0;
+                        ended = false;
+                        add(beatmapTextField);
+                        add(beatmapButton);
+                    }
+                    if (playing) {
+                        paused = true;
                     }
                 }
             }
@@ -228,7 +263,10 @@ public class GameScreen extends JPanel {
                             }
                         }
                         currentSlider.release();
-                        combo += 1;
+                        combo ++;
+                        if (combo > maxCombo) {
+                            maxCombo = combo;
+                        }
                         score += combo * currentNote.getHitScore();
                         rawScore += currentNote.getHitScore();
                         totalRawScore += 300;
@@ -270,6 +308,11 @@ public class GameScreen extends JPanel {
             if (timeDelta >= 1000 && !songStarted) {
                 Sound.playSound("files/beatmaps/" + beatmap + ".wav");
                 songStarted = true;
+            }
+
+            if (timeDelta >= 1000 + length) {
+                ended = true;
+                playing = false;
             }
 
             // set currentNote
@@ -442,7 +485,10 @@ public class GameScreen extends JPanel {
                                     note.setHitScore(100);
                                 }
                             }
-                            combo += 1;
+                            combo ++;
+                            if (combo > maxCombo) {
+                                maxCombo = combo;
+                            }
                             score += combo * currentNote.getHitScore();
                             rawScore += currentNote.getHitScore();
                             totalRawScore += 300;
@@ -464,24 +510,23 @@ public class GameScreen extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        // paint 31 notes at a time to reduce lag
-        TreeSet<Note> drawNotes = new TreeSet<>();
-        ArrayList<Note> noteList = new ArrayList<>(notes);
-        for (Note note : notes) {
-            if (currentNote != null) {
-                if (noteList.indexOf(note) >= noteList.indexOf(currentNote) - 15
-                        && noteList.indexOf(note) <= noteList.indexOf(currentNote) + 15) {
-                    drawNotes.add(note);
+        if (playing) {
+            // paint 31 notes at a time to reduce lag
+            TreeSet<Note> drawNotes = new TreeSet<>();
+            ArrayList<Note> noteList = new ArrayList<>(notes);
+            for (Note note : notes) {
+                if (currentNote != null) {
+                    if (noteList.indexOf(note) >= noteList.indexOf(currentNote) - 15
+                            && noteList.indexOf(note) <= noteList.indexOf(currentNote) + 15) {
+                        drawNotes.add(note);
+                    }
                 }
             }
-        }
-        for (Note note : drawNotes.descendingSet()) {
-            note.draw(g);
-        }
-        startButton.draw(g);
+            for (Note note : drawNotes.descendingSet()) {
+                note.draw(g);
+            }
 
-        // draw score, combo, and accuracy
-        if (playing) {
+            // draw score, combo, and accuracy
             g.setColor(Color.WHITE);
             Font numberFont = new Font("Lato", Font.BOLD, 50);
             FontMetrics metrics = g.getFontMetrics(numberFont);
@@ -506,7 +551,36 @@ public class GameScreen extends JPanel {
                         accuracy, Screen.SCREEN_WIDTH - metrics.stringWidth(accuracy) - 30, 130
                 );
             }
-        } else { // draw instructions
+        } else if (ended) {
+            g.setColor(Color.WHITE);
+            Font numberFont = new Font("Lato", Font.BOLD, 50);
+            FontMetrics metrics = g.getFontMetrics(numberFont);
+            g.setFont(numberFont);
+            g.drawString(
+                    name, Screen.SCREEN_WIDTH / 2 - metrics.stringWidth(name) / 2, Screen.SCREEN_HEIGHT / 2 - metrics.getHeight() * 2
+            );
+            g.drawString(
+                    String.valueOf(score),
+                    Screen.SCREEN_WIDTH / 2 - metrics.stringWidth(String.valueOf(score)) / 2, Screen.SCREEN_HEIGHT / 2 - metrics.getHeight()
+            );
+            g.drawString(
+                    "Max Combo: " + maxCombo + "X", Screen.SCREEN_WIDTH / 2 - metrics.stringWidth("Max Combo: " + maxCombo + "X") / 2,
+                    Screen.SCREEN_HEIGHT / 2
+            );
+            if (totalRawScore == 0) {
+                g.drawString("0%", Screen.SCREEN_WIDTH / 2 - metrics.stringWidth("0%") / 2, Screen.SCREEN_HEIGHT / 2 + metrics.getHeight());
+            } else {
+                String accuracy = Math.round((rawScore * 100.0 / totalRawScore) * 100.0)
+                        / 100.0 + "%";
+                g.drawString(
+                        accuracy, Screen.SCREEN_WIDTH / 2 - metrics.stringWidth(accuracy) / 2, Screen.SCREEN_HEIGHT / 2 + metrics.getHeight()
+                );
+            }
+            g.drawString(
+                    "Press Escape to return to the main menu", Screen.SCREEN_WIDTH / 2 - metrics.stringWidth("Press Escape to return to the main menu") / 2,
+                    Screen.SCREEN_HEIGHT / 2 + metrics.getHeight() * 2
+            );
+        } else {
             g.setColor(Color.WHITE);
             Font titleFont = new Font("Lato", Font.BOLD, 50);
             g.setFont(titleFont);
@@ -546,7 +620,11 @@ public class GameScreen extends JPanel {
                 g.setColor(Color.RED);
                 g.drawString("Error getting beatmap", 50, 300);
             }
+            startButton.setEnabled(true);
         }
+
+        // draw buttons
+        startButton.draw(g);
 
         // draw cursor
         cursor.draw(g);

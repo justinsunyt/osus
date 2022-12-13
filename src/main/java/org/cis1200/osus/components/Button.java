@@ -7,7 +7,7 @@ import java.io.File;
 
 public class Button extends GameObj {
     private BufferedImage image;
-    private boolean disabled = false;
+    private boolean enabled = true;
 
     public Button(int px, int py, int width, int height, String file) {
         super(px, py, width, height);
@@ -18,17 +18,17 @@ public class Button extends GameObj {
         }
     }
 
-    public void setDisabled() {
-        this.disabled = true;
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
-    public boolean getDisabled() {
-        return this.disabled;
+    public boolean getEnabled() {
+        return this.enabled;
     }
 
     @Override
     public void draw(Graphics g) {
-        if (!disabled) {
+        if (enabled) {
             g.drawImage(image, this.getPx(), this.getPy(), this.getWidth(), this.getHeight(), null);
         }
     }

@@ -1,4 +1,4 @@
-D, Harumachi Clover (Swing Arrangement) [Dictate Edit], 170, 8, 5, 150
+D, Harumachi Clover (Swing Arrangement) [Dictate Edit], 170, 8, 5, 150, 37
 C, 60, 40, 12, 1, 255, 0, 0, 150
 C, 40, 60, 20, 2, 255, 0, 0, 150
 C, 40, 60, 28, 1, 255, 0, 0, 150
