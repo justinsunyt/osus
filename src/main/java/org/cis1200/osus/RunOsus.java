@@ -38,7 +38,6 @@ public class RunOsus implements Runnable {
         frame.getContentPane().setCursor(blankCursor);
 
         // Start game
-        screen.loadBeatmap();
         screen.reset();
     }
 }

@@ -27,8 +27,11 @@ public class GameScreen extends JPanel {
             Screen.SCREEN_WIDTH - 250, Screen.SCREEN_HEIGHT - 300, 200, 200,
             "files/images/start.png"
     );
+    private final JTextField beatmapTextField = new JTextField(20);
+    private final JButton beatmapButton = new JButton("Load Beatmap");
 
     private boolean playing = false; // whether the game is running
+    private boolean error = false;
     private int mouseX;
     private int mouseY;
     private String beatmap; // beatmap file location
@@ -52,6 +55,64 @@ public class GameScreen extends JPanel {
         // creates border around the screen
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
         setBackground(Color.BLACK);
+        beatmapTextField.setFont(new Font("Lato", Font.PLAIN, 20));
+        beatmapButton.setFont(new Font("Lato", Font.PLAIN, 20));
+        beatmapButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    FileLineIterator fileLineIterator = new FileLineIterator(
+                            "files/beatmaps/" + beatmapTextField.getText() + ".txt"
+                    );
+                    beatmap = beatmapTextField.getText();
+                    while (fileLineIterator.hasNext()) {
+                        String line = fileLineIterator.next();
+                        String[] strings = line.split(", ");
+                        if (strings[0].equals("D")) {
+                            name = strings[1];
+                            bpm = Integer.parseInt(strings[2]);
+                            ar = Integer.parseInt(strings[3]);
+                            cs = Integer.parseInt(strings[4]);
+                            offset = Integer.parseInt(strings[5]);
+                        }
+                        if (strings[0].equals("C")) {
+                            notes.add(
+                                    new Circle(
+                                            Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                            Integer.parseInt(strings[3]), ar, cs,
+                                            Integer.parseInt(strings[4]),
+                                            new Color(
+                                                    Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
+                                                    Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
+                                            )
+                                    )
+                            );
+                        }
+                        if (strings[0].equals("S")) {
+                            notes.add(
+                                    new Slider(
+                                            Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                            Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
+                                            Integer.parseInt(strings[6]), ar, cs,
+                                            Integer.parseInt(strings[7]),
+                                            new Color(
+                                                    Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
+                                                    Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
+                                            )
+                                    )
+                            );
+                        }
+                    }
+                    error = false;
+                    beatmapButton.getParent().remove(beatmapTextField);
+                    beatmapButton.getParent().remove(beatmapButton);
+                } catch (IllegalArgumentException ex) {
+                    error = true;
+                }
+            }
+        });
+        this.add(beatmapTextField);
+        this.add(beatmapButton);
 
         // The timer is an object which triggers an action periodically with the
         // given INTERVAL. We register an ActionListener with this timer, whose
@@ -99,14 +160,15 @@ public class GameScreen extends JPanel {
                                 && mouseX <= startButton.getPx() + startButton.getWidth()) {
                             if (mouseY >= startButton.getPy()
                                     && mouseY <= startButton.getPy() + startButton.getHeight()) {
-                                playing = true;
-                                startTime = System.currentTimeMillis();
-                                startButton.setDisabled();
-                                Sound.playSound("files/sounds/start.wav");
+                                if (beatmap != null) {
+                                    playing = true;
+                                    startTime = System.currentTimeMillis();
+                                    startButton.setDisabled();
+                                    Sound.playSound("files/sounds/start.wav");
+                                }
                             }
                         }
                     }
-
                 }
             }
 
@@ -183,51 +245,6 @@ public class GameScreen extends JPanel {
                 mouseY = e.getY();
             }
         });
-    }
-
-    public void loadBeatmap() {
-        this.beatmap = "HarumachiClover";
-        FileLineIterator fileLineIterator = new FileLineIterator(
-                "files/beatmaps/" + beatmap + ".txt"
-        );
-        while (fileLineIterator.hasNext()) {
-            String line = fileLineIterator.next();
-            String[] strings = line.split(", ");
-            if (strings[0].equals("D")) {
-                this.name = strings[1];
-                this.bpm = Integer.parseInt(strings[2]);
-                this.ar = Integer.parseInt(strings[3]);
-                this.cs = Integer.parseInt(strings[4]);
-                this.offset = Integer.parseInt(strings[5]);
-            }
-            if (strings[0].equals("C")) {
-                this.notes.add(
-                        new Circle(
-                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                                Integer.parseInt(strings[3]), this.ar, this.cs,
-                                Integer.parseInt(strings[4]),
-                                new Color(
-                                        Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
-                                        Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
-                                )
-                        )
-                );
-            }
-            if (strings[0].equals("S")) {
-                this.notes.add(
-                        new Slider(
-                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                                Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
-                                Integer.parseInt(strings[6]), this.ar, this.cs,
-                                Integer.parseInt(strings[7]),
-                                new Color(
-                                        Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
-                                        Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
-                                )
-                        )
-                );
-            }
-        }
     }
 
     /**
@@ -514,10 +531,21 @@ public class GameScreen extends JPanel {
                     50, 210
             );
             g.drawString(
-                    "When you're ready, drag the cursor over the sus! " +
-                            "circle and hit Z or X to begin!",
+                    "When you're ready, enter a beatmap name (try HarumachiClover) and load the beatmap",
                     50, 240
             );
+            g.drawString(
+                    "Once loaded, hover over the sus! logo and press Z or X to start! Good luck!",
+                    50, 270
+            );
+            if (beatmap != null) {
+                g.setColor(Color.CYAN);
+                g.drawString("Loaded: " + name, 50, 300);
+            }
+            if (error) {
+                g.setColor(Color.RED);
+                g.drawString("Error getting beatmap", 50, 300);
+            }
         }
 
         // draw cursor
