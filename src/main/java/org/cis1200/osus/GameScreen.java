@@ -10,8 +10,11 @@ import org.cis1200.osus.utils.Sound;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.TreeSet;
+import java.io.FileWriter;
 
 /**
  * GameScreen
@@ -35,6 +38,8 @@ public class GameScreen extends JPanel {
     private boolean paused = false; // whether the beatmap is paused
     private boolean ended = false; // whether the beatmap has ended
     private boolean error = false;
+    private boolean save = true;
+    private boolean saveError = false;
     private int mouseX;
     private int mouseY;
     private String beatmap; // beatmap file location
@@ -59,6 +64,70 @@ public class GameScreen extends JPanel {
     // Update interval for timer, in milliseconds
     public static final int INTERVAL = 1000 / 240;
 
+    public void loadBeatmap(String location) {
+        try {
+            FileLineIterator fileLineIterator = new FileLineIterator(
+                    "files/beatmaps/" + location + ".txt"
+            );
+            song = new Sound("files/beatmaps/" + location + ".wav");
+            beatmap = location;
+            while (fileLineIterator.hasNext()) {
+                String line = fileLineIterator.next();
+                String[] strings = line.split(", ");
+                try {
+                    if (strings[0].equals("D") && strings.length == 7) {
+                        name = strings[1];
+                        bpm = Integer.parseInt(strings[2]);
+                        ar = Integer.parseInt(strings[3]);
+                        cs = Integer.parseInt(strings[4]);
+                        offset = Integer.parseInt(strings[5]);
+                        length = Integer.parseInt(strings[6]) * 1000L;
+                    }
+                    if (strings[0].equals("C") && strings.length == 9) {
+                        notes.add(
+                                new Circle(
+                                        Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                        Integer.parseInt(strings[3]), ar, cs,
+                                        Integer.parseInt(strings[4]),
+                                        new Color(
+                                                Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
+                                                Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
+                                        )
+                                )
+                        );
+                    }
+                    if (strings[0].equals("S") && strings.length == 12) {
+                        notes.add(
+                                new Slider(
+                                        Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
+                                        Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
+                                        Integer.parseInt(strings[6]), ar, cs,
+                                        Integer.parseInt(strings[7]),
+                                        new Color(
+                                                Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
+                                                Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
+                                        )
+                                )
+                        );
+                    }
+                } catch (Exception ex) {
+                    error = true;
+                }
+            }
+            if (name == null || bpm == 0 || ar == 0 || cs == 0 || offset == 0 || length == 0) {
+                error = true;
+            } else {
+                error = false;
+                if (beatmapButton.getParent() != null) {
+                    beatmapButton.getParent().remove(beatmapTextField);
+                    beatmapButton.getParent().remove(beatmapButton);
+                }
+            }
+        } catch (IllegalArgumentException ex) {
+            error = true;
+        }
+    }
+
     public GameScreen() {
         // creates border around the screen
         setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -68,69 +137,50 @@ public class GameScreen extends JPanel {
         beatmapButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                try {
-                    FileLineIterator fileLineIterator = new FileLineIterator(
-                            "files/beatmaps/" + beatmapTextField.getText() + ".txt"
-                    );
-                    song = new Sound("files/beatmaps/" + beatmapTextField.getText() + ".wav");
-                    beatmap = beatmapTextField.getText();
-                    while (fileLineIterator.hasNext()) {
-                        String line = fileLineIterator.next();
-                        String[] strings = line.split(", ");
-                        try {
-                            if (strings[0].equals("D") && strings.length == 7) {
-                                name = strings[1];
-                                bpm = Integer.parseInt(strings[2]);
-                                ar = Integer.parseInt(strings[3]);
-                                cs = Integer.parseInt(strings[4]);
-                                offset = Integer.parseInt(strings[5]);
-                                length = Integer.parseInt(strings[6]) * 1000L;
-                            }
-                            if (strings[0].equals("C") && strings.length == 9) {
-                                notes.add(
-                                        new Circle(
-                                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                                                Integer.parseInt(strings[3]), ar, cs,
-                                                Integer.parseInt(strings[4]),
-                                                new Color(
-                                                        Integer.parseInt(strings[5]), Integer.parseInt(strings[6]),
-                                                        Integer.parseInt(strings[7]), Integer.parseInt(strings[8])
-                                                )
-                                        )
-                                );
-                            }
-                            if (strings[0].equals("S") && strings.length == 12) {
-                                notes.add(
-                                        new Slider(
-                                                Integer.parseInt(strings[1]), Integer.parseInt(strings[2]),
-                                                Integer.parseInt(strings[3]), strings[4].equals("H"), Integer.parseInt(strings[5]),
-                                                Integer.parseInt(strings[6]), ar, cs,
-                                                Integer.parseInt(strings[7]),
-                                                new Color(
-                                                        Integer.parseInt(strings[8]), Integer.parseInt(strings[9]),
-                                                        Integer.parseInt(strings[10]), Integer.parseInt(strings[11])
-                                                )
-                                        )
-                                );
-                            }
-                        } catch (Exception ex) {
-                            error = true;
-                        }
-                    }
-                    if (name == null || bpm == 0 || ar == 0 || cs == 0 || offset == 0 || length == 0) {
-                        error = true;
-                    } else {
-                        error = false;
-                        beatmapButton.getParent().remove(beatmapTextField);
-                        beatmapButton.getParent().remove(beatmapButton);
-                    }
-                } catch (IllegalArgumentException ex) {
-                    error = true;
-                }
+                loadBeatmap(beatmapTextField.getText());
             }
         });
+
         this.add(beatmapTextField);
         this.add(beatmapButton);
+
+        try {
+            FileLineIterator fileLineIterator = new FileLineIterator(
+                    "files/save.txt"
+            );
+            if (fileLineIterator.hasNext()) {
+                String line = fileLineIterator.next();
+                String[] strings = line.split(", ");
+                try {
+                    if (strings[0].equals("P") && strings.length == 12) {
+                        loadBeatmap(strings[1]);
+                        currentNote = new ArrayList<Note>(notes).get(Integer.parseInt(strings[2]));
+                        timeDelta = Long.parseLong(strings[3]);
+                        pauseDelta = Long.parseLong(strings[4]);
+                        startTime = Long.parseLong(strings[5]);
+                        pauseTime = Long.parseLong(strings[6]);
+                        score = Integer.parseInt(strings[7]);
+                        rawScore = Integer.parseInt(strings[8]);
+                        totalRawScore = Integer.parseInt(strings[9]);
+                        combo = Integer.parseInt(strings[10]);
+                        maxCombo = Integer.parseInt(strings[11]);
+                        playing = true;
+                        paused = true;
+                        songStarted = true;
+                        startButton.setEnabled(false);
+                    } else {
+                        save = false;
+                    }
+                } catch (Exception ex) {
+                    saveError = true;
+                    ex.printStackTrace();
+                }
+            } else {
+                save = false;
+            }
+        } catch (IllegalArgumentException ex) {
+            saveError = true;
+        }
 
         // The timer is an object which triggers an action periodically with the
         // given INTERVAL. We register an ActionListener with this timer, whose
@@ -147,7 +197,7 @@ public class GameScreen extends JPanel {
         addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_Z || e.getKeyCode() == KeyEvent.VK_X) {
-                    if (currentNote != null && currentNote.getIfHitScore() > 0) {
+                    if (!paused && currentNote != null && currentNote.getIfHitScore() > 0) {
                         if (mouseX >= currentNote.getPx() - currentNote.getWidth() / 2
                                 && mouseX <= currentNote.getPx() + currentNote.getWidth() / 2) {
                             if (mouseY >= currentNote.getPy() - currentNote.getHeight() / 2
@@ -195,18 +245,18 @@ public class GameScreen extends JPanel {
                     if (ended) {
                         notes = new TreeSet<>();
                         currentNote = null;
-                        beatmap = null; // beatmap file location
-                        name = null; // song name
-                        bpm = 0; // song bpm
-                        ar = 0; // song approach rate
-                        cs = 0; // song circle size
-                        offset = 0; // beatmap offset
-                        length = 0; // song length
+                        beatmap = null;
+                        name = null;
+                        bpm = 0;
+                        ar = 0;
+                        cs = 0;
+                        offset = 0;
+                        length = 0;
                         startTime = 0;
                         lastTick = 0;
                         songStarted = false;
                         score = 0;
-                        rawScore = 0; // used to calculate accuracy
+                        rawScore = 0;
                         totalRawScore = 0;
                         combo = 0;
                         maxCombo = 0;
@@ -219,10 +269,18 @@ public class GameScreen extends JPanel {
                             paused = true;
                             pauseTime = System.currentTimeMillis();
                             song.pause();
+                            try {
+                                BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("files/save.txt"));
+                                int currentNoteIndex = new ArrayList<Note>(notes).indexOf(currentNote);
+                                bufferedWriter.write("P, " + beatmap + ", " + currentNoteIndex + ", " + timeDelta + ", " + pauseDelta + ", " + startTime + ", " + pauseTime + ", " + score + ", " + rawScore + ", " + totalRawScore + ", " + combo + ", " + maxCombo);
+                                bufferedWriter.close();
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
                         } else {
                             paused = false;
                             pauseDelta += System.currentTimeMillis() - pauseTime;
-                            song.play();
+                            song.playFrom(System.currentTimeMillis() - startTime - pauseDelta - 1000);
                         }
                     }
                 }
@@ -230,7 +288,7 @@ public class GameScreen extends JPanel {
 
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_Z || e.getKeyCode() == KeyEvent.VK_X) {
-                    if (currentNote != null && currentNote.getClass() == Slider.class
+                    if (!paused && currentNote != null && currentNote.getClass() == Slider.class
                             && currentNote.getHit() && !((Slider) currentNote).getReleased()) {
                         Slider currentSlider = (Slider) currentNote;
                         if (currentSlider.getHorizontal()) {
@@ -331,10 +389,17 @@ public class GameScreen extends JPanel {
                     songStarted = true;
                 }
 
-                if (timeDelta >= 1000 + length) {
+                if (timeDelta >= 1000 + length && !ended) {
                     song.pause();
                     ended = true;
                     playing = false;
+                    try {
+                        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("files/save.txt"));
+                        bufferedWriter.newLine();
+                        bufferedWriter.close();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
                 }
 
                 // set currentNote
@@ -640,20 +705,29 @@ public class GameScreen extends JPanel {
                     50, 210
             );
             g.drawString(
-                    "When you're ready, enter a beatmap name (try HarumachiClover) and load the beatmap",
+                    "At any point in the game, you can press Escape to pause and save the game.",
                     50, 240
             );
             g.drawString(
-                    "Once loaded, hover over the sus! logo and press Z or X to start! Good luck!",
+                    "When you're ready, enter a beatmap name (try HarumachiClover) and load the beatmap",
                     50, 270
+            );
+            g.drawString(
+                    "Once loaded, hover over the sus! logo and press Z or X to start! Good luck!",
+                    50, 300
             );
             if (beatmap != null && !error) {
                 g.setColor(Color.CYAN);
-                g.drawString("Loaded: " + name, 50, 300);
-            }
-            if (error) {
+                g.drawString("Loaded: " + name, 50, 330);
+            } else if (error) {
                 g.setColor(Color.RED);
-                g.drawString("Error getting beatmap", 50, 300);
+                g.drawString("Error loading beatmap", 50, 330);
+            } else if (!save) {
+                g.setColor(Color.CYAN);
+                g.drawString("No available save, please play and pause the game to save", 50, 330);
+            } else if (saveError) {
+                g.setColor(Color.RED);
+                g.drawString("Error loading save", 50, 330);
             }
             startButton.setEnabled(true);
         }

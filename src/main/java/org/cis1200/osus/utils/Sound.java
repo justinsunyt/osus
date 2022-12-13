@@ -29,9 +29,18 @@ public class Sound {
         }
     }
 
+    public void playFrom(long milliseconds) {
+        if (clip != null) {
+            clip.setMicrosecondPosition(milliseconds * 1000);
+            System.out.println(milliseconds * 1000);
+            clip.start();
+        }
+    }
+
     public void pause() {
         if (clip != null) {
             clipTimePosition = clip.getMicrosecondPosition();
+            System.out.println(clipTimePosition);
             clip.stop();
             clip.flush();
         }
